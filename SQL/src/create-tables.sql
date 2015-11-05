@@ -9,9 +9,9 @@ CREATE TABLE marche_halibaba.users (
   user_id INTEGER PRIMARY KEY
     DEFAULT NEXTVAL('marche_halibaba.users_pk'),
   username VARCHAR(50) NOT NULL CHECK (username <> '') UNIQUE,
-  password VARCHAR(50) NOT NULL CHECK (password <> '')
+  pswd VARCHAR(50) NOT NULL CHECK (pswd <> '')
 );
-CREATE INDEX password_idx ON marche_halibaba.users(password);
+CREATE INDEX password_idx ON marche_halibaba.users(pswd);
 
 -- Clients
 CREATE SEQUENCE marche_halibaba.clients_pk;
