@@ -1,16 +1,17 @@
 -- Removing all tables
-DROP TABLE IF EXISTS marche_halibaba.* CASCADE;
+DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
+DROP TYPE IF EXISTS estimate_status;
 CREATE SCHEMA marche_halibaba;
 
 -- Users
 CREATE SEQUENCE marche_halibaba.users_pk;
 CREATE TABLE marche_halibaba.users (
   user_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.pk_users'),
+    DEFAULT NEXTVAL('marche_halibaba.users_pk'),
   username VARCHAR(50) NOT NULL CHECK (username <> '') UNIQUE,
-  password VARCHAR(50) NOT NULL CHECK (password <> ''),
+  password VARCHAR(50) NOT NULL CHECK (password <> '')
 );
-CREATE INDEX marche_halibaba.password_idx ON marche_halibaba.users(password);
+CREATE INDEX password_idx ON marche_halibaba.users(password);
 
 -- Clients
 CREATE SEQUENCE marche_halibaba.clients_pk;
@@ -83,7 +84,7 @@ CREATE TABLE marche_halibaba.estimates (
   estimate_request_id INTEGER
     REFERENCES marche_halibaba.estimate_requests(estimate_request_id),
   house_id INTEGER
-    REFERENCES marche_halibaba.houses(house_id),
+    REFERENCES marche_halibaba.houses(house_id)
 );
 
 -- Options
