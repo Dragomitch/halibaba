@@ -1,6 +1,8 @@
--- Removing all tables
+-- Removes all previous data
 DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
 DROP TYPE IF EXISTS estimate_status;
+
+-- Schema
 CREATE SCHEMA marche_halibaba;
 
 -- Users
