@@ -16,7 +16,7 @@ DECLARE
   new_invoicing_address_id INTEGER;
   new_estimate_request_id INTEGER;
 BEGIN
-  INSERT INTO marche_halibaba.addresses(street_name, street_number, zip_code, city)
+  INSERT INTO marche_halibaba.addresses(street_name, street_nbr, zip_code, city)
     VALUES (arg_cons_street_name, arg_cons_street_nbr, arg_cons_zip_code, arg_cons_city)
     RETURNING address_id INTO new_construction_address_id;
 
@@ -27,7 +27,7 @@ BEGIN
     arg_inv_zip_code IS NOT NULL AND
     arg_inv_city IS NOT NULL THEN
 
-    INSERT INTO marche_halibaba.addresses(street_name, street_number, zip_code, city)
+    INSERT INTO marche_halibaba.addresses(street_name, street_nbr, zip_code, city)
       VALUES (arg_inv_street_name, arg_inv_street_nbr, arg_inv_zip_code, arg_inv_city)
       RETURNING address_id INTO new_invoicing_address_id;
 
