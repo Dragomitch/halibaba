@@ -103,7 +103,7 @@ CREATE TABLE marche_halibaba.options (
 -- Estimate options
 CREATE SEQUENCE marche_halibaba.estimate_options_pk;
 CREATE TABLE marche_halibaba.estimate_options (
-  estimate_option_id INTEGER
+  estimate_option_id INTEGER PRIMARY KEY
     DEFAULT NEXTVAL('marche_halibaba.estimate_options_pk'),
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
   is_chosen BOOLEAN NOT NULL DEFAULT FALSE,
