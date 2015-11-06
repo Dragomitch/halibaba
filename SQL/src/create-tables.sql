@@ -8,8 +8,8 @@ CREATE SEQUENCE marche_halibaba.users_pk;
 CREATE TABLE marche_halibaba.users (
   user_id INTEGER PRIMARY KEY
     DEFAULT NEXTVAL('marche_halibaba.users_pk'),
-  username VARCHAR(50) NOT NULL CHECK (username <> '') UNIQUE,
-  pswd VARCHAR(50) NOT NULL CHECK (pswd <> '')
+  username VARCHAR(35) NOT NULL CHECK (username <> '') UNIQUE,
+  pswd VARCHAR(32) NOT NULL CHECK (pswd <> '')
 );
 CREATE INDEX password_idx ON marche_halibaba.users(pswd);
 
@@ -30,9 +30,9 @@ CREATE TABLE marche_halibaba.addresses (
   address_id INTEGER PRIMARY KEY
     DEFAULT NEXTVAL('marche_halibaba.addresses_pk'),
   street_name VARCHAR(50) NOT NULL CHECK (street_name <> ''),
-  street_number VARCHAR(8) NOT NULL CHECK (street_number <> ''),
-  city VARCHAR(35) NOT NULL CHECK (city <> ''),
-  zip_code VARCHAR(8) NOT NULL CHECK (zip_code <> '')
+  street_nbr VARCHAR(8) NOT NULL CHECK (street_number <> ''),
+  zip_code VARCHAR(5) NOT NULL CHECK (zip_code ~ '^[0-9]+$'),
+  city VARCHAR(35) NOT NULL CHECK (city <> '')
 );
 
 -- Estimate requests
@@ -41,7 +41,7 @@ CREATE TABLE marche_halibaba.estimate_requests (
   estimate_request_id INTEGER PRIMARY KEY
     DEFAULT NEXTVAL('marche_halibaba.estimate_requests_pk'),
   description TEXT NOT NULL CHECK (description <> ''),
-  work_address INTEGER
+  construction_address INTEGER
     REFERENCES marche_halibaba.addresses(address_id),
   invoicing_address INTEGER NULL
     REFERENCES marche_halibaba.addresses(address_id),
