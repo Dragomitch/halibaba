@@ -16,7 +16,11 @@ INSERT INTO marche_halibaba.houses(name, user_id)
 
 -- Inserts estimates (temporary)
 INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 6000', 1600, 1, 1);
+  VALUES ('Super toilettes 1', 1600, 1, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super toilettes 2', 1600, 1, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super toilettes 3', 1600, 1, 1);
 
 INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
   VALUES ('Super 1', 1600, 2, 1);
@@ -40,3 +44,6 @@ INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
   VALUES (4000, 1, 2);
 INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
   VALUES (2000, 1, 3);
+
+-- Approves estimate 1 (temporary)
+SELECT marche_halibaba.approve_estimate(1, '{1,2}');

@@ -74,7 +74,7 @@ CREATE TABLE marche_halibaba.houses (
 
 -- Estimates
 CREATE SEQUENCE marche_halibaba.estimates_pk;
-CREATE TYPE estimate_status AS ENUM ('submitted', 'approved', 'cancelled', 'expired');
+CREATE TYPE estimate_status AS ENUM ('submitted', 'approved', 'unapproved', 'cancelled', 'expired');
 CREATE TABLE marche_halibaba.estimates (
   estimate_id INTEGER PRIMARY KEY
     DEFAULT NEXTVAL('marche_halibaba.estimates_pk'),
@@ -185,25 +185,25 @@ DECLARE
   estimate_details RECORD;
   option INTEGER;
 BEGIN
-
   -- An exception is raised if a estimate has already been approved for this estimate request
   IF EXISTS(
     SELECT *
-    FROM marche_halibaba.estimates e
-    WHERE e.estimate_request_id = (
+      FROM marche_halibaba.estimates e
+      WHERE e.estimate_request_id = (
         SELECT e2.estimate_request_id
-        FROM marche_halibaba.estimates e2
-        WHERE e2.estimate_id = arg_estimate_id
+          FROM marche_halibaba.estimates e2
+          WHERE e2.estimate_id = arg_estimate_id
       ) AND e.status = 'approved'
   )THEN
     RAISE EXCEPTION 'Un devis a déjà été approuvé pour cette demande.';
   END IF;
 
-  SELECT e.status as status, (er.pub_date + INTERVAL '15 days') as expiration_date
-  INTO estimate_details
-  FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-  WHERE er.estimate_request_id = e.estimate_request_id AND
-    e.estimate_id = arg_estimate_id;
+  SELECT e.estimate_request_id as estimate_request_id,
+      e.status as status, (er.pub_date + INTERVAL '15 days') as expiration_date
+    INTO estimate_details
+    FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
+    WHERE er.estimate_request_id = e.estimate_request_id AND
+      e.estimate_id = arg_estimate_id;
 
   -- An exception is raised because the estimate has been cancelled
   IF estimate_details.status <> 'submitted' THEN
@@ -214,15 +214,23 @@ BEGIN
   -- The estimate and the chosen options are succesfully approved
   ELSE
     UPDATE marche_halibaba.estimates
-    SET status = 'approved'
-    WHERE estimate_id = arg_estimate_id;
+      SET status = 'approved'
+      WHERE estimate_id = arg_estimate_id;
 
-    FOREACH option IN ARRAY arg_chosen_options
-    LOOP
+    UPDATE marche_halibaba.estimates
+      SET status = 'unapproved'
+      WHERE estimate_id IN (
+        SELECT e.estimate_id
+          FROM marche_halibaba.estimates e
+          WHERE e.estimate_request_id = estimate_details.estimate_request_id AND
+            e.status = 'submitted'
+      );
+
       UPDATE marche_halibaba.estimate_options
-      SET is_chosen = TRUE
-      WHERE option_id = option;
-    END LOOP;
+        SET is_chosen = TRUE
+        WHERE option_id IN ARRAY arg_chosen_options;
+
+
 
   END IF;
 
@@ -265,30 +273,6 @@ CREATE TRIGGER trigger_estimate_options_update
   EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
 
 
-CREATE OR REPLACE FUNCTION marche_halibaba.update_estimates_status()
-  RETURNS void AS $$
-
-DECLARE
-BEGIN
-
-    UPDATE marche_halibaba.estimates
-      SET status = 'expired'
-      WHERE estimate_id IN (  SELECT e.estimate_id
-          FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
-          WHERE e.estimate_request_id = er.estimate_request_id AND
-            er.pub_date + INTERVAL '15 days' < NOW() AND
-            e.status = 'submitted' AND
-            NOT EXISTS (
-              SELECT *
-              FROM marche_halibaba.estimates e2
-              WHERE e2.estimate_request_id = e.estimate_request_id AND
-                e2.status = 'approved'
-            ));
-
-END;
-$$ LANGUAGE 'plpgsql';
-
-
 -- Inserts clients
 SELECT marche_halibaba.signup_client('jeremy', 'blublu', 'Jeremy', 'Wagemans');
 SELECT marche_halibaba.signup_client('philippe', 'blublu', 'Philippe', 'Dragomir');
@@ -307,7 +291,11 @@ INSERT INTO marche_halibaba.houses(name, user_id)
 
 -- Inserts estimates (temporary)
 INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 6000', 1600, 1, 1);
+  VALUES ('Super toilettes 1', 1600, 1, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super toilettes 2', 1600, 1, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super toilettes 3', 1600, 1, 1);
 
 INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
   VALUES ('Super 1', 1600, 2, 1);

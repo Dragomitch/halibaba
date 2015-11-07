@@ -73,7 +73,7 @@ CREATE TABLE marche_halibaba.houses (
 
 -- Estimates
 CREATE SEQUENCE marche_halibaba.estimates_pk;
-CREATE TYPE estimate_status AS ENUM ('submitted', 'approved', 'cancelled', 'expired');
+CREATE TYPE estimate_status AS ENUM ('submitted', 'approved', 'unapproved', 'cancelled', 'expired');
 CREATE TABLE marche_halibaba.estimates (
   estimate_id INTEGER PRIMARY KEY
     DEFAULT NEXTVAL('marche_halibaba.estimates_pk'),

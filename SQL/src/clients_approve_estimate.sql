@@ -7,25 +7,25 @@ DECLARE
   estimate_details RECORD;
   option INTEGER;
 BEGIN
-
   -- An exception is raised if a estimate has already been approved for this estimate request
   IF EXISTS(
     SELECT *
-    FROM marche_halibaba.estimates e
-    WHERE e.estimate_request_id = (
+      FROM marche_halibaba.estimates e
+      WHERE e.estimate_request_id = (
         SELECT e2.estimate_request_id
-        FROM marche_halibaba.estimates e2
-        WHERE e2.estimate_id = arg_estimate_id
+          FROM marche_halibaba.estimates e2
+          WHERE e2.estimate_id = arg_estimate_id
       ) AND e.status = 'approved'
   )THEN
     RAISE EXCEPTION 'Un devis a déjà été approuvé pour cette demande.';
   END IF;
 
-  SELECT e.status as status, (er.pub_date + INTERVAL '15 days') as expiration_date
-  INTO estimate_details
-  FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-  WHERE er.estimate_request_id = e.estimate_request_id AND
-    e.estimate_id = arg_estimate_id;
+  SELECT e.estimate_request_id as estimate_request_id,
+      e.status as status, (er.pub_date + INTERVAL '15 days') as expiration_date
+    INTO estimate_details
+    FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
+    WHERE er.estimate_request_id = e.estimate_request_id AND
+      e.estimate_id = arg_estimate_id;
 
   -- An exception is raised because the estimate has been cancelled
   IF estimate_details.status <> 'submitted' THEN
@@ -36,14 +36,23 @@ BEGIN
   -- The estimate and the chosen options are succesfully approved
   ELSE
     UPDATE marche_halibaba.estimates
-    SET status = 'approved'
-    WHERE estimate_id = arg_estimate_id;
+      SET status = 'approved'
+      WHERE estimate_id = arg_estimate_id;
+
+    UPDATE marche_halibaba.estimates
+      SET status = 'unapproved'
+      WHERE estimate_id IN (
+        SELECT e.estimate_id
+          FROM marche_halibaba.estimates e
+          WHERE e.estimate_request_id = estimate_details.estimate_request_id AND
+            e.status = 'submitted'
+      );
 
     FOREACH option IN ARRAY arg_chosen_options
     LOOP
       UPDATE marche_halibaba.estimate_options
-      SET is_chosen = TRUE
-      WHERE option_id = option;
+        SET is_chosen = TRUE
+        WHERE option_id = option;
     END LOOP;
 
   END IF;
@@ -51,5 +60,3 @@ BEGIN
   RETURN 0;
 END;
 $$ LANGUAGE plpgsql;
-
-SELECT marche_halibaba.approve_estimate(1, '{1,2}');
