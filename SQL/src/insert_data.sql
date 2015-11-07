@@ -6,6 +6,10 @@ SELECT marche_halibaba.signup_client('philippe', 'blublu', 'Philippe', 'Dragomir
 SELECT marche_halibaba.submit_estimate_request('Installation de nouveaux sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', null, null, null, null);
 SELECT marche_halibaba.submit_estimate_request('Installation de nouveaux sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', 'Ebre', '29b', '17487', 'Empuriabrava');
 
+UPDATE marche_halibaba.estimate_requests
+  SET pub_date = '2014-12-23'
+  WHERE estimate_request_id = 2;
+
 -- Inserts houses (temporary)
 INSERT INTO marche_halibaba.houses(name, user_id)
   VALUES ('Blaaaaa', 2);
@@ -13,6 +17,13 @@ INSERT INTO marche_halibaba.houses(name, user_id)
 -- Inserts estimates (temporary)
 INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
   VALUES ('Super toilettes 6000', 1600, 1, 1);
+
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super 1', 1600, 2, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super 2', 1600, 2, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super 3', 1600, 2, 1);
 
 -- Inserts options (temporary)
 INSERT INTO marche_halibaba.options(description, price, house_id)

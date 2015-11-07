@@ -1,7 +1,7 @@
 -- Lists submitted estimate requests
 SELECT er.estimate_request_id, er.description, er.deadline, er.pub_date
 FROM marche_halibaba.estimate_requests er
-WHERE er.pub_date + INTERVAL '15 days' >= NOW() AND
+WHERE er.pub_date + INTERVAL '15' day >= NOW() AND
   NOT EXISTS (
     SELECT *
     FROM marche_halibaba.estimates e
@@ -23,7 +23,7 @@ ORDER BY er.pub_date DESC
 -- Lists expired estimate requests
 SELECT er.estimate_request_id, er.description, er.deadline, er.pub_date
 FROM marche_halibaba.estimate_requests er
-WHERE er.pub_date + INTERVAL '15 days' < NOW() AND
+WHERE er.pub_date + INTERVAL '15' day < NOW() AND
   NOT EXISTS (
     SELECT *
     FROM marche_halibaba.estimates e

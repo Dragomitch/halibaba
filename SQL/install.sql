@@ -176,7 +176,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION approve_estimate(INTEGER, INTEGER[])
+CREATE OR REPLACE FUNCTION marche_halibaba.approve_estimate(INTEGER, INTEGER[])
   RETURNS INTEGER AS $$
 
 DECLARE
@@ -189,10 +189,10 @@ BEGIN
   -- An exception is raised if a estimate has already been approved for this estimate request
   IF EXISTS(
     SELECT *
-    FROM estimates e
+    FROM marche_halibaba.estimates e
     WHERE e.estimate_request_id = (
         SELECT e2.estimate_request_id
-        FROM estimates e2
+        FROM marche_halibaba.estimates e2
         WHERE e2.estimate_id = arg_estimate_id
       ) AND e.status = 'approved'
   )THEN
@@ -201,7 +201,7 @@ BEGIN
 
   SELECT e.status as status, (er.pub_date + INTERVAL '15 days') as expiration_date
   INTO estimate_details
-  FROM estimate_requests er, estimates e
+  FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
   WHERE er.estimate_request_id = e.estimate_request_id AND
     e.estimate_id = arg_estimate_id;
 
@@ -213,13 +213,13 @@ BEGIN
     RAISE EXCEPTION 'Cette demande de devis est expirée.';
   -- The estimate and the chosen options are succesfully approved
   ELSE
-    UPDATE estimates
+    UPDATE marche_halibaba.estimates
     SET status = 'approved'
     WHERE estimate_id = arg_estimate_id;
 
     FOREACH option IN ARRAY arg_chosen_options
     LOOP
-      UPDATE options
+      UPDATE marche_halibaba.estimate_options
       SET is_chosen = TRUE
       WHERE option_id = option;
     END LOOP;
@@ -230,24 +230,26 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+SELECT marche_halibaba.approve_estimate(1, '{1,2}');
+
 
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_options_update()
   RETURNS TRIGGER AS $$
 
 DECLARE
   house_to_update INTEGER;
-  old_turnover INTEGER;
+  old_turnover NUMERIC(12,2);
 
 BEGIN
   SELECT h.house_id, h.turnover
     INTO house_to_update, old_turnover
-    FROM estimate_options eo, options o, houses h
+    FROM marche_halibaba.estimate_options eo, marche_halibaba.options o, marche_halibaba.houses h
     WHERE eo.option_id = o.option_id AND
       o.house_id = h.house_id AND
       eo.estimate_option_id = OLD.estimate_option_id;
 
   IF OLD.is_chosen = FALSE AND NEW.is_chosen = TRUE THEN
-    UPDATE houses
+    UPDATE marche_halibaba.houses
       SET turnover = old_turnover + OLD.price
       WHERE house_id = house_to_update;
   END IF;
@@ -263,6 +265,30 @@ CREATE TRIGGER trigger_estimate_options_update
   EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
 
 
+CREATE OR REPLACE FUNCTION marche_halibaba.update_estimates_status()
+  RETURNS void AS $$
+
+DECLARE
+BEGIN
+
+    UPDATE marche_halibaba.estimates
+      SET status = 'expired'
+      WHERE estimate_id IN (  SELECT e.estimate_id
+          FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
+          WHERE e.estimate_request_id = er.estimate_request_id AND
+            er.pub_date + INTERVAL '15 days' < NOW() AND
+            e.status = 'submitted' AND
+            NOT EXISTS (
+              SELECT *
+              FROM marche_halibaba.estimates e2
+              WHERE e2.estimate_request_id = e.estimate_request_id AND
+                e2.status = 'approved'
+            ));
+
+END;
+$$ LANGUAGE 'plpgsql';
+
+
 -- Inserts clients
 SELECT marche_halibaba.signup_client('jeremy', 'blublu', 'Jeremy', 'Wagemans');
 SELECT marche_halibaba.signup_client('philippe', 'blublu', 'Philippe', 'Dragomir');
@@ -271,6 +297,10 @@ SELECT marche_halibaba.signup_client('philippe', 'blublu', 'Philippe', 'Dragomir
 SELECT marche_halibaba.submit_estimate_request('Installation de nouveaux sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', null, null, null, null);
 SELECT marche_halibaba.submit_estimate_request('Installation de nouveaux sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', 'Ebre', '29b', '17487', 'Empuriabrava');
 
+UPDATE marche_halibaba.estimate_requests
+  SET pub_date = '2014-12-23'
+  WHERE estimate_request_id = 2;
+
 -- Inserts houses (temporary)
 INSERT INTO marche_halibaba.houses(name, user_id)
   VALUES ('Blaaaaa', 2);
@@ -278,6 +308,13 @@ INSERT INTO marche_halibaba.houses(name, user_id)
 -- Inserts estimates (temporary)
 INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
   VALUES ('Super toilettes 6000', 1600, 1, 1);
+
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super 1', 1600, 2, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super 2', 1600, 2, 1);
+INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
+  VALUES ('Super 3', 1600, 2, 1);
 
 -- Inserts options (temporary)
 INSERT INTO marche_halibaba.options(description, price, house_id)
