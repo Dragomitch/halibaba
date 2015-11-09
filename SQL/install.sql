@@ -14,7 +14,6 @@ CREATE TABLE marche_halibaba.users (
   username VARCHAR(35) NOT NULL CHECK (username <> '') UNIQUE,
   pswd VARCHAR(32) NOT NULL CHECK (pswd <> '')
 );
-CREATE INDEX password_idx ON marche_halibaba.users(pswd);
 
 -- Clients
 CREATE SEQUENCE marche_halibaba.clients_pk;
@@ -64,9 +63,9 @@ CREATE TABLE marche_halibaba.houses (
   acceptance_rate NUMERIC(3,2) NOT NULL DEFAULT 0,
   caught_cheating_nbr INTEGER NOT NULL DEFAULT 0,
   caught_cheater_nbr INTEGER NOT NULL DEFAULT 0,
-  last_time_secret TIMESTAMP NULL,
-  last_time_hiding TIMESTAMP NULL,
-  last_time_reported TIMESTAMP NULL,
+  secret_limit_expiration TIMESTAMP NULL,
+  hiding_limit_expiration TIMESTAMP NULL,
+  penalty_expiration TIMESTAMP NULL,
   submitted_estimates_nbr INTEGER NOT NULL DEFAULT 0,
   user_id INTEGER NOT NULL
     REFERENCES marche_halibaba.users(user_id)
@@ -83,7 +82,7 @@ CREATE TABLE marche_halibaba.estimates (
   status estimate_status NOT NULL DEFAULT 'submitted',
   is_secret BOOLEAN NOT NULL DEFAULT FALSE,
   is_hiding BOOLEAN NOT NULL DEFAULT FALSE,
-  pub_date TIMESTAMP NOT NULL DEFAULT NOW(),
+  submission_date TIMESTAMP NOT NULL DEFAULT NOW(),
   estimate_request_id INTEGER NOT NULL
     REFERENCES marche_halibaba.estimate_requests(estimate_request_id),
   house_id INTEGER NOT NULL
@@ -165,7 +164,7 @@ BEGIN
         er.estimate_request_id = arg_estimate_request_id
   ) THEN
     SELECT e.estimate_id, e.description, e.price,
-        count(DISTINCT eo.option_id), e.pub_date, e.house_id
+        count(DISTINCT eo.option_id), e.submission_date, e.house_id
       INTO out
       FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
       LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
@@ -173,7 +172,7 @@ BEGIN
       WHERE er.estimate_request_id = e.estimate_request_id AND
         e.status = 'approved' AND
         er.estimate_request_id = arg_estimate_request_id
-      GROUP BY e.estimate_id, e.description, e.price, e.pub_date, e.house_id;
+      GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id;
 
     RETURN NEXT out;
     RETURN;
@@ -191,7 +190,7 @@ BEGIN
       er.estimate_request_id = arg_estimate_request_id
   ) THEN
     SELECT e.estimate_id, e.description, e.price,
-        count(DISTINCT eo.option_id), e.pub_date, e.house_id
+        count(DISTINCT eo.option_id), e.submission_date, e.house_id
       INTO out
       FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
         LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
@@ -200,7 +199,7 @@ BEGIN
         e.is_hiding = TRUE AND
         e.status <> 'cancelled' AND
         er.estimate_request_id = arg_estimate_request_id
-      GROUP BY e.estimate_id, e.description, e.price, e.pub_date, e.house_id;
+      GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id;
 
     RETURN NEXT out;
     RETURN;
@@ -209,14 +208,14 @@ BEGIN
   -- All estimates for this estimate request are returned
   FOR cur_estimate IN (
     SELECT e.estimate_id, e.description, e.price,
-        count(DISTINCT eo.option_id), e.pub_date, e.house_id
+        count(DISTINCT eo.option_id), e.submission_date, e.house_id
       FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
         LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
           eo.estimate_id = e.estimate_id
       WHERE er.estimate_request_id = e.estimate_request_id AND
         e.status = 'submitted' AND
         er.estimate_request_id = arg_estimate_request_id
-      GROUP BY e.estimate_id, e.description, e.price, e.pub_date, e.house_id
+      GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id
   ) LOOP
     SELECT cur_estimate.*INTO out;
     RETURN NEXT out;
