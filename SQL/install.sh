@@ -6,9 +6,13 @@ echo '' > $DIR/install.sql
 scripts=()
 scripts+=('create-tables.sql')
 scripts+=('clients_signup.sql')
+scripts+=('clients_list_estimates.sql')
 scripts+=('clients_submit_estimate_request.sql')
 scripts+=('clients_approve_estimate.sql')
+scripts+=('houses_signup.sql')
 scripts+=('triggers_options_update.sql')
+scripts+=('triggers_estimates_insert.sql')
+scripts+=('triggers_estimates_update.sql')
 scripts+=('insert_data.sql')
 
 for script in ${scripts[*]} ; do
