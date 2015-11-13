@@ -1,24 +1,19 @@
 -- Removes all previous data
 DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
-DROP TYPE IF EXISTS estimate_status;
 
 -- Schema
 CREATE SCHEMA marche_halibaba;
 
 -- Users
-CREATE SEQUENCE marche_halibaba.users_pk;
 CREATE TABLE marche_halibaba.users (
-  user_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.users_pk'),
+  user_id SERIAL PRIMARY KEY,
   username VARCHAR(35) NOT NULL CHECK (username <> '') UNIQUE,
   pswd VARCHAR(32) NOT NULL CHECK (pswd <> '')
 );
 
 -- Clients
-CREATE SEQUENCE marche_halibaba.clients_pk;
 CREATE TABLE marche_halibaba.clients (
-  client_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.clients_pk'),
+  client_id SERIAL PRIMARY KEY,
   last_name VARCHAR(35) NOT NULL CHECK (last_name <> ''),
   first_name VARCHAR(35) NOT NULL CHECK (first_name <> ''),
   user_id INTEGER NOT NULL
@@ -26,10 +21,8 @@ CREATE TABLE marche_halibaba.clients (
 );
 
 -- Addresses
-CREATE SEQUENCE marche_halibaba.addresses_pk;
 CREATE TABLE marche_halibaba.addresses (
-  address_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.addresses_pk'),
+  address_id SERIAL PRIMARY KEY,
   street_name VARCHAR(50) NOT NULL CHECK (street_name <> ''),
   street_nbr VARCHAR(8) NOT NULL CHECK (street_nbr <> ''),
   zip_code VARCHAR(5) NOT NULL CHECK (zip_code ~ '^[0-9]+$'),
@@ -37,10 +30,8 @@ CREATE TABLE marche_halibaba.addresses (
 );
 
 -- Estimate requests
-CREATE SEQUENCE marche_halibaba.estimate_requests_pk;
 CREATE TABLE marche_halibaba.estimate_requests (
-  estimate_request_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.estimate_requests_pk'),
+  estimate_request_id SERIAL PRIMARY KEY,
   description TEXT NOT NULL CHECK (description <> ''),
   construction_address INTEGER NOT NULL
     REFERENCES marche_halibaba.addresses(address_id),
@@ -48,15 +39,14 @@ CREATE TABLE marche_halibaba.estimate_requests (
     REFERENCES marche_halibaba.addresses(address_id),
   pub_date TIMESTAMP NOT NULL DEFAULT NOW(),
   deadline DATE NOT NULL CHECK (deadline > NOW()),
-  client_id INTEGER
+  chosen_estimate INTEGER,
+  client_id INTEGER NOT NULL
     REFERENCES marche_halibaba.clients(client_id)
 );
 
 -- Houses
-CREATE SEQUENCE marche_halibaba.houses_pk;
 CREATE TABLE marche_halibaba.houses (
-  house_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.houses_pk'),
+  house_id SERIAL PRIMARY KEY,
   name VARCHAR(35) NOT NULL CHECK (name <> ''),
   turnover NUMERIC(12,2) NOT NULL DEFAULT 0,
   acceptance_rate NUMERIC(3,2) NOT NULL DEFAULT 0,
@@ -71,14 +61,11 @@ CREATE TABLE marche_halibaba.houses (
 );
 
 -- Estimates
-CREATE SEQUENCE marche_halibaba.estimates_pk;
-CREATE TYPE estimate_status AS ENUM ('submitted', 'approved', 'unapproved', 'cancelled', 'expired');
 CREATE TABLE marche_halibaba.estimates (
-  estimate_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.estimates_pk'),
+  estimate_id SERIAL PRIMARY KEY,
   description TEXT NOT NULL CHECK (description <> ''),
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
-  status estimate_status NOT NULL DEFAULT 'submitted',
+  is_cancelled BOOLEAN NOT NULL DEFAULT FALSE,
   is_secret BOOLEAN NOT NULL DEFAULT FALSE,
   is_hiding BOOLEAN NOT NULL DEFAULT FALSE,
   submission_date TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -88,11 +75,14 @@ CREATE TABLE marche_halibaba.estimates (
     REFERENCES marche_halibaba.houses(house_id)
 );
 
+ALTER TABLE marche_halibaba.estimate_requests
+ADD CONSTRAINT chosen_estimate_fk FOREIGN KEY (chosen_estimate)
+REFERENCES marche_halibaba.estimates(estimate_id)
+ON DELETE CASCADE;
+
 -- Options
-CREATE SEQUENCE marche_halibaba.options_pk;
 CREATE TABLE marche_halibaba.options (
-  option_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.options_pk'),
+  option_id SERIAL PRIMARY KEY,
   description TEXT NOT NULL CHECK (description <> ''),
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
   house_id INTEGER NOT NULL
@@ -100,10 +90,8 @@ CREATE TABLE marche_halibaba.options (
 );
 
 -- Estimate options
-CREATE SEQUENCE marche_halibaba.estimate_options_pk;
 CREATE TABLE marche_halibaba.estimate_options (
-  estimate_option_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.estimate_options_pk'),
+  estimate_option_id SERIAL PRIMARY KEY,
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
   is_chosen BOOLEAN NOT NULL DEFAULT FALSE,
   estimate_id INTEGER NOT NULL

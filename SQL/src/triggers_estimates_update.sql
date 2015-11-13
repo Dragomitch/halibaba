@@ -1,3 +1,4 @@
+-- DEPRECATED
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimates_update()
   RETURNS TRIGGER AS $$
 
@@ -22,12 +23,16 @@ BEGIN
     UPDATE marche_halibaba.houses
       SET turnover = turnover + OLD.price,
         acceptance_rate = approved_estimates_nbr/estimates_nbr,
+        /** DEPRECATED
         submitted_estimates_nbr = submitted_estimates_nbr - 1
+        **/
       WHERE house_id = OLD.house_id;
+  /** DEPRECATED
   ELSIF OLD.status = 'submitted' AND NEW.status <> 'approved' THEN
     UPDATE marche_halibaba.houses
       SET submitted_estimates_nbr = submitted_estimates_nbr - 1
       WHERE house_id = OLD.house_id;
+  **/
   END IF;
 
   RETURN NEW;
