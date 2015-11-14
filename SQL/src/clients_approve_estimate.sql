@@ -37,7 +37,8 @@ BEGIN
     LOOP
       UPDATE marche_halibaba.estimate_options
       SET is_chosen = TRUE
-      WHERE option_id = option;
+      WHERE option_id = option AND
+        estimate_id = arg_estimate_id;
     END LOOP;
 
   END IF;

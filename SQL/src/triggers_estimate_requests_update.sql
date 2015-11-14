@@ -8,9 +8,9 @@ DECLARE
   estimates_nbr NUMERIC(16,2);
 BEGIN
   SELECT e.house_id, e.price
-  INTO house_id, estimate_price
+  INTO approved_estimate_house_id, approved_estimate_price
   FROM marche_halibaba.estimates e
-  WHERE e.estimate_id = NEW.chosen_estimate
+  WHERE e.estimate_id = NEW.chosen_estimate;
 
   SELECT count(estimate_id)
   INTO approved_estimates_nbr
@@ -25,13 +25,13 @@ BEGIN
 
   -- Updates house statistics
   UPDATE marche_halibaba.houses
-  SET turnover = turnover + estimate_price,
-    acceptance_rate = approved_estimates_nbr/estimates_nbr,
+  SET turnover = turnover + approved_estimate_price,
+    acceptance_rate = approved_estimates_nbr/estimates_nbr
   WHERE house_id = approved_estimate_house_id;
 
   RETURN NEW;
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_estimate_requests_update
 AFTER UPDATE on marche_halibaba.estimate_requests
