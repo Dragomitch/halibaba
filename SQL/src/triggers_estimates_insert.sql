@@ -1,3 +1,4 @@
+-- DEPRECATED
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimates_insert()
   RETURNS TRIGGER AS $$
 
@@ -10,7 +11,9 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
+/**
 CREATE TRIGGER trigger_estimates_insert
   AFTER INSERT on marche_halibaba.estimates
   FOR EACH ROW
   EXECUTE PROCEDURE marche_halibaba.trigger_estimates_insert();
+**/
