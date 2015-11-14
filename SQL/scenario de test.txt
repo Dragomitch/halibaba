@@ -1,0 +1,16 @@
+Scénario de test
+
+1.	Inscription de 3 maisons :
+a.	clegane, blublu, House Clegane
+b.	hornwood, blublu, House Hornwoord
+c.	cerwyn, blublu, House Cerwyn
+2.	Inscription d’un client :
+a.	Jeremy, blublu, Wagemans, Jeremy
+3.	Soumission de 4 demande de devis
+4.	
+
+Test à effectuer
+
+1.	Il y a 3 maisons
+2.	Maison 1 contient les bonnes données
+3.	Il y a un client
