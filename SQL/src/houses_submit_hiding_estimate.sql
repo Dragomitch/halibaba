@@ -1,4 +1,4 @@
-﻿--Rajouter le temps dans la durée de la punition en print out?
+--Rajouter le temps dans la durée de la punition en print out?
 --Problème si on veut ajouter en secret+hiding
 
 --Procedure
@@ -19,10 +19,6 @@ BEGIN
     THEN RAISE EXCEPTION data_exception;
   END IF;
 
-  IF arg_is_cancelled= TRUE
-    THEN RAISE EXCEPTION data_exception;
-  END IF;
-  
   IF arg_is_hiding= FALSE
     THEN RAISE EXCEPTION data_exception;
   END IF;
@@ -59,14 +55,14 @@ BEGIN
       RAISE EXCEPTION 'Cette demande de devis est expirée.';
   END IF;
 
-  IF (EXISTS(-- S'il y a déjà un devis masquant pour cette estimate_request
+  IF EXISTS(-- S'il y a déjà un devis masquant pour cette estimate_request
     SELECT h.house_id
       INTO caught_cheating_house_id
     FROM marche_halibaba.estimates e, marche_halibaba.houses h
     WHERE e.estimate_request_id= arg_estimate_request_id
       AND e.is_hiding= TRUE 
-  ))
-  THEN(
+  )
+  THEN
     UPDATE marche_halibaba.houses SET penalty_expiration= NOW()+ '1 days'
     WHERE  house_id= caught_cheating_house_id;
 
@@ -80,15 +76,14 @@ BEGIN
     WHERE house_id= caught_cheating_house_id
       AND submission_date>= NOW() - '1 days';
 
-    INSERT INTO marche_halibaba.estimate(description, price, is_cancelled, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
-      VALUES (arg_description, arg_price, arg_is_cancelled, arg_is_secret, FALSE, NOW(), arg_estimate_request_id, arg_house_id)
+    INSERT INTO marche_halibaba.estimate(description, price, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
+      VALUES (arg_description, arg_price, arg_is_secret, FALSE, NOW(), arg_estimate_request_id, arg_house_id)
       RETURNING estimate_id INTO new_estimate_request_id;
     RETURN new_estimate_request_id;
-  )
 
   ELSE
-    INSERT INTO marche_halibaba.estimate(description, price, is_cancelled, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
-      VALUES (arg_description, arg_price, arg_is_cancelled, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
+    INSERT INTO marche_halibaba.estimate(description, price, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
+      VALUES (arg_description, arg_price, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
       RETURNING estimate_id INTO new_estimate_request_id;
     RETURN new_estimate_request_id;
 

@@ -1,4 +1,5 @@
 --Rajouter le temps dans la durée de la punition en print out?
+--Problème si on veut ajouter en secret+hiding
 
 --Procedure
 CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER)
@@ -13,11 +14,25 @@ DECLARE
   arg_house_id ALIAS FOR $6;
   new_estimate_request_id INTEGER;
 BEGIN
-  IF arg_is_secret = TRUE
+  IF arg_is_secret = FALSE
     THEN RAISE EXCEPTION data_exception;
   END IF;
-  
-  IF arg_is_hiding = TRUE
+
+  IF arg_is_hiding= TRUE
+    THEN RAISE EXCEPTION data_exception;
+  END IF;
+  /*IF (arg_is_hiding = TRUE --Si le devis est secret + hiding: on vérifie qu'il peut être hiding
+    AND ( SELECT *
+          FROM marche_halibaba.houses h
+          WHERE h.house_id= arg_house_id
+            AND h.hiding_limit_expiration) > NOW())
+    THEN RAISE EXCEPTION data_exception;
+  END IF;*/
+
+  IF ( SELECT * --Si le devis est secret: on vérifie qu'il peut l'être
+          FROM marche_halibaba.houses h
+          WHERE h.house_id= arg_house_id
+            AND h.secret_limit_expiration > NOW())
     THEN RAISE EXCEPTION data_exception;
   END IF;
 
@@ -43,6 +58,9 @@ BEGIN
     VALUES (arg_description, arg_price, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
     RETURNING estimate_id INTO new_estimate_request_id;
   RETURN new_estimate_request_id;
+
+  UPDATE marche_halibaba.houses SET secret_limit_expiration= NOW()+ '1 days'
+  WHERE house_id= arg_house_id;
 
 END;
 $$ LANGUAGE 'plpgsql';

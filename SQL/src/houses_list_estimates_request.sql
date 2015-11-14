@@ -28,7 +28,7 @@ BEGIN
 			LEFT OUTER JOIN marche_halibaba.estimate_options eo ON eo.estimate_id= e.estimate_id
 		WHERE e.estimate_request_id= arg_estimate_request_id
 			AND e.is_cancelled= FALSE
-			AND (e.is_secret= FALSE OR (e.is_secret= TRUE AND e.house_id= arg_house_id))-- devis par caché par la même maison, ou caché
+			AND (e.is_secret= FALSE OR (e.is_secret= TRUE AND e.house_id= arg_house_id))-- devis caché ou caché par la même maison
 	)	LOOP
 		SELECT cur_estimate.* INTO out;
 		RETURN NEXT out;
