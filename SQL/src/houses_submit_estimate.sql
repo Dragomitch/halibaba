@@ -18,6 +18,7 @@ BEGIN
   END IF;
   
   IF arg_is_hiding = TRUE
+    --THEN SELECT marche_halibaba.submit_hiding_estimate(arg_description, arg_price, arg_is_secret, arg_is_hiding, arg_estimate_request_id, arg_house_id);
     THEN RAISE EXCEPTION data_exception;
   END IF;
 

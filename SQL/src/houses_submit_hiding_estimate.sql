@@ -2,7 +2,7 @@
 --Problème si on veut ajouter en secret+hiding
 
 --Procedure
-CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER)
+CREATE OR REPLACE FUNCTION marche_halibaba.submit_hiding_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER)
   RETURNS INTEGER AS $$
 
 DECLARE
