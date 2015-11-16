@@ -8,7 +8,7 @@ CREATE SCHEMA marche_halibaba;
 CREATE TABLE marche_halibaba.users (
   user_id SERIAL PRIMARY KEY,
   username VARCHAR(35) NOT NULL CHECK (username <> '') UNIQUE,
-  pswd VARCHAR(32) NOT NULL CHECK (pswd <> '')
+  pswd VARCHAR(255) NOT NULL CHECK (pswd <> '')
 );
 
 -- Clients
@@ -55,7 +55,6 @@ CREATE TABLE marche_halibaba.houses (
   secret_limit_expiration TIMESTAMP NULL,
   hiding_limit_expiration TIMESTAMP NULL,
   penalty_expiration TIMESTAMP NULL,
-  submitted_estimates_nbr INTEGER NOT NULL DEFAULT 0,
   user_id INTEGER NOT NULL
     REFERENCES marche_halibaba.users(user_id)
 );

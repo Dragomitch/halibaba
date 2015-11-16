@@ -8,8 +8,13 @@ DECLARE
   new_user_id INTEGER;
   new_client_id INTEGER;
 BEGIN
-  INSERT INTO marche_halibaba.users(username, pswd) VALUES (arg_username, MD5(arg_pswd)) RETURNING user_id INTO new_user_id;
-  INSERT INTO marche_halibaba.clients(last_name, first_name, user_id) VALUES (arg_last_name, arg_first_name, new_user_id) RETURNING client_id INTO new_client_id;
+  INSERT INTO marche_halibaba.users(username, pswd)
+    VALUES (arg_username, arg_pswd)
+    RETURNING user_id INTO new_user_id;
+
+  INSERT INTO marche_halibaba.clients(last_name, first_name, user_id)
+    VALUES (arg_last_name, arg_first_name, new_user_id)
+    RETURNING client_id INTO new_client_id;
   RETURN new_client_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE 'plpgsql';

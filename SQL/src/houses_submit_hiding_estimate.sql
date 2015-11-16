@@ -42,16 +42,16 @@ BEGIN
     FROM marche_halibaba.houses h
     WHERE h.house_id= arg_house_id
       AND h.penalty_expiration > NOW()
-    )THEN 
+    )THEN
       RAISE EXCEPTION 'Vous êtes interdit de devis pour le moment.';
   END IF;
 
   IF EXISTS( --If the estimate_request is expired, we raise a exception;
     SELECT *
     FROM marche_halibaba.estimate_request er
-    WHERE er.estimate_request_id= arg_estimate_request_id  
+    WHERE er.estimate_request_id= arg_estimate_request_id
       AND er.deadline< NOW()
-    )THEN 
+    )THEN
       RAISE EXCEPTION 'Cette demande de devis est expirée.';
   END IF;
 
@@ -60,21 +60,18 @@ BEGIN
       INTO caught_cheating_house_id
     FROM marche_halibaba.estimates e, marche_halibaba.houses h
     WHERE e.estimate_request_id= arg_estimate_request_id
-      AND e.is_hiding= TRUE 
+      AND e.is_hiding= TRUE
   )
   THEN
-    UPDATE marche_halibaba.houses SET penalty_expiration= NOW()+ '1 days'
-    WHERE  house_id= caught_cheating_house_id;
-
-    UPDATE marche_halibaba.houses SET caught_cheating_nbr= caught_cheating_nbr+1
-    WHERE house_id= caught_cheating_house_id;
-
-    UPDATE marche_halibaba.houses SET caught_cheater_nbr= caught_cheater_nbr+1
-    WHERE house_id= arg_house_id;
+    UPDATE marche_halibaba.houses
+    SET penalty_expiration = NOW() + '1 days',
+      caught_cheating_nbr = caught_cheating_nbr+1,
+      caught_cheater_nbr = caught_cheater_nbr+1
+    WHERE  house_id = caught_cheating_house_id;
 
     UPDATE marche_halibaba.estimates SET is_cancelled= TRUE
     WHERE house_id= caught_cheating_house_id
-      AND submission_date>= NOW() - '1 days';
+      AND submission_date >= NOW() - '1 days';
 
     INSERT INTO marche_halibaba.estimate(description, price, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
       VALUES (arg_description, arg_price, arg_is_secret, FALSE, NOW(), arg_estimate_request_id, arg_house_id)

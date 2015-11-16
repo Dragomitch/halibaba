@@ -39,4 +39,4 @@ BEGIN
 
   RETURN new_estimate_request_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE 'plpgsql';
