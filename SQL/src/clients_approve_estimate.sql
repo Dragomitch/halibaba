@@ -45,4 +45,4 @@ BEGIN
 
   RETURN 0;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE 'plpgsql';

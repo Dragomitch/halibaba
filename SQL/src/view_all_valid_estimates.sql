@@ -4,8 +4,8 @@ CREATE OR REPLACE VIEW marche_halibaba.valid_estimates AS
     er.description AS "Description de la Requete"
   FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
   WHERE e.estimate_request_id= er.estimate_request_id
-    AND er.deadline> NOW() AND e.is_secret= FALSE
-    AND e.is_cancelled= FALSE AND er.chosen_estimate IS NULL
+    AND er.deadline > NOW() AND e.is_secret = FALSE
+    AND e.is_cancelled = FALSE AND er.chosen_estimate IS NULL
   ORDER BY e.estimate_id;
 
 --Comment introduire la house en paramètre pour afficher ses devis secrets?

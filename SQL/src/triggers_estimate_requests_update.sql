@@ -31,7 +31,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trigger_estimate_requests_update
 AFTER UPDATE on marche_halibaba.estimate_requests

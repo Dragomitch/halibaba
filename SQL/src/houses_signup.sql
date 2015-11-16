@@ -8,9 +8,10 @@ DECLARE
   new_house_id INTEGER;
 BEGIN
   INSERT INTO marche_halibaba.users(username, pswd)
-    VALUES (arg_username, MD5(arg_pswd)) RETURNING user_id INTO new_user_id;
+    VALUES (arg_username, arg_pswd) RETURNING user_id INTO new_user_id;
+
   INSERT INTO marche_halibaba.houses(name, user_id)
     VALUES (arg_name, new_user_id) RETURNING house_id INTO new_house_id;
   RETURN new_house_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE 'plpgsql';
