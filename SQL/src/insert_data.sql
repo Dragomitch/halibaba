@@ -2,7 +2,9 @@
 SELECT marche_halibaba.signup_client('jeremy', 'blublu', 'Jeremy', 'Wagemans');
 
 -- Inserts houses
-SELECT marche_halibaba.signup_house('philippe', 'blublu', 'Noble House');
+SELECT marche_halibaba.signup_house('clegane', 'blublu', 'House Clegane');
+SELECT marche_halibaba.signup_house('hornwood', 'blublu', 'House Hornwoord');
+SELECT marche_halibaba.signup_house('cerwyn', 'blublu', 'House Cerwyn');
 
 -- Inserts estimate requests
 SELECT marche_halibaba.submit_estimate_request('Installation de nouveaux sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', null, null, null, null);

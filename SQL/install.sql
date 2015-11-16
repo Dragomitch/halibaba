@@ -1,25 +1,20 @@
 
 -- Removes all previous data
 DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
-DROP TYPE IF EXISTS estimate_status;
 
 -- Schema
 CREATE SCHEMA marche_halibaba;
 
 -- Users
-CREATE SEQUENCE marche_halibaba.users_pk;
 CREATE TABLE marche_halibaba.users (
-  user_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.users_pk'),
+  user_id SERIAL PRIMARY KEY,
   username VARCHAR(35) NOT NULL CHECK (username <> '') UNIQUE,
   pswd VARCHAR(32) NOT NULL CHECK (pswd <> '')
 );
 
 -- Clients
-CREATE SEQUENCE marche_halibaba.clients_pk;
 CREATE TABLE marche_halibaba.clients (
-  client_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.clients_pk'),
+  client_id SERIAL PRIMARY KEY,
   last_name VARCHAR(35) NOT NULL CHECK (last_name <> ''),
   first_name VARCHAR(35) NOT NULL CHECK (first_name <> ''),
   user_id INTEGER NOT NULL
@@ -27,10 +22,8 @@ CREATE TABLE marche_halibaba.clients (
 );
 
 -- Addresses
-CREATE SEQUENCE marche_halibaba.addresses_pk;
 CREATE TABLE marche_halibaba.addresses (
-  address_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.addresses_pk'),
+  address_id SERIAL PRIMARY KEY,
   street_name VARCHAR(50) NOT NULL CHECK (street_name <> ''),
   street_nbr VARCHAR(8) NOT NULL CHECK (street_nbr <> ''),
   zip_code VARCHAR(5) NOT NULL CHECK (zip_code ~ '^[0-9]+$'),
@@ -38,10 +31,8 @@ CREATE TABLE marche_halibaba.addresses (
 );
 
 -- Estimate requests
-CREATE SEQUENCE marche_halibaba.estimate_requests_pk;
 CREATE TABLE marche_halibaba.estimate_requests (
-  estimate_request_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.estimate_requests_pk'),
+  estimate_request_id SERIAL PRIMARY KEY,
   description TEXT NOT NULL CHECK (description <> ''),
   construction_address INTEGER NOT NULL
     REFERENCES marche_halibaba.addresses(address_id),
@@ -49,15 +40,14 @@ CREATE TABLE marche_halibaba.estimate_requests (
     REFERENCES marche_halibaba.addresses(address_id),
   pub_date TIMESTAMP NOT NULL DEFAULT NOW(),
   deadline DATE NOT NULL CHECK (deadline > NOW()),
-  client_id INTEGER
+  chosen_estimate INTEGER,
+  client_id INTEGER NOT NULL
     REFERENCES marche_halibaba.clients(client_id)
 );
 
 -- Houses
-CREATE SEQUENCE marche_halibaba.houses_pk;
 CREATE TABLE marche_halibaba.houses (
-  house_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.houses_pk'),
+  house_id SERIAL PRIMARY KEY,
   name VARCHAR(35) NOT NULL CHECK (name <> ''),
   turnover NUMERIC(12,2) NOT NULL DEFAULT 0,
   acceptance_rate NUMERIC(3,2) NOT NULL DEFAULT 0,
@@ -72,14 +62,11 @@ CREATE TABLE marche_halibaba.houses (
 );
 
 -- Estimates
-CREATE SEQUENCE marche_halibaba.estimates_pk;
-CREATE TYPE estimate_status AS ENUM ('submitted', 'approved', 'unapproved', 'cancelled', 'expired');
 CREATE TABLE marche_halibaba.estimates (
-  estimate_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.estimates_pk'),
+  estimate_id SERIAL PRIMARY KEY,
   description TEXT NOT NULL CHECK (description <> ''),
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
-  status estimate_status NOT NULL DEFAULT 'submitted',
+  is_cancelled BOOLEAN NOT NULL DEFAULT FALSE,
   is_secret BOOLEAN NOT NULL DEFAULT FALSE,
   is_hiding BOOLEAN NOT NULL DEFAULT FALSE,
   submission_date TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -89,11 +76,14 @@ CREATE TABLE marche_halibaba.estimates (
     REFERENCES marche_halibaba.houses(house_id)
 );
 
+ALTER TABLE marche_halibaba.estimate_requests
+ADD CONSTRAINT chosen_estimate_fk FOREIGN KEY (chosen_estimate)
+REFERENCES marche_halibaba.estimates(estimate_id)
+ON DELETE CASCADE;
+
 -- Options
-CREATE SEQUENCE marche_halibaba.options_pk;
 CREATE TABLE marche_halibaba.options (
-  option_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.options_pk'),
+  option_id SERIAL PRIMARY KEY,
   description TEXT NOT NULL CHECK (description <> ''),
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
   house_id INTEGER NOT NULL
@@ -101,10 +91,8 @@ CREATE TABLE marche_halibaba.options (
 );
 
 -- Estimate options
-CREATE SEQUENCE marche_halibaba.estimate_options_pk;
 CREATE TABLE marche_halibaba.estimate_options (
-  estimate_option_id INTEGER PRIMARY KEY
-    DEFAULT NEXTVAL('marche_halibaba.estimate_options_pk'),
+  estimate_option_id SERIAL PRIMARY KEY,
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
   is_chosen BOOLEAN NOT NULL DEFAULT FALSE,
   estimate_id INTEGER NOT NULL
@@ -132,7 +120,7 @@ $$ LANGUAGE plpgsql;
 
 
 -- Custom type
-DROP TYPE IF EXISTS marche_halibaba.estimate;
+--DROP TYPE IF EXISTS marche_halibaba.estimate;
 CREATE TYPE marche_halibaba.estimate
   AS (
     estimate_id INTEGER,
@@ -155,52 +143,43 @@ BEGIN
 
   -- If an estimate has already been approved for this estimate request,
   -- that estimate is returned
-  -- TODO: AJOUTER LEFT JOIN SUR les options
-  IF EXISTS (
-    SELECT *
-      FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-      WHERE er.estimate_request_id = e.estimate_request_id AND
-        e.status = 'approved' AND
-        er.estimate_request_id = arg_estimate_request_id
-  ) THEN
+  IF (
+    SELECT chosen_estimate
+    FROM marche_halibaba.estimate_requests
+    WHERE estimate_request_id = arg_estimate_request_id
+  ) IS NOT NULL THEN
     SELECT e.estimate_id, e.description, e.price,
         count(DISTINCT eo.option_id), e.submission_date, e.house_id
       INTO out
       FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
       LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
         eo.estimate_id = e.estimate_id
-      WHERE er.estimate_request_id = e.estimate_request_id AND
-        e.status = 'approved' AND
+      WHERE er.chosen_estimate = e.estimate_id AND
         er.estimate_request_id = arg_estimate_request_id
       GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id;
-
     RETURN NEXT out;
     RETURN;
   END IF;
 
   -- If an hiding estimate has been submitted for this estimate request,
   -- that estimate is returned
-  -- TODO: TRAITEMENT QUAND PLUSIEURS HIDING POUR UNE MAISON
   IF EXISTS (
     SELECT *
-    FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-    WHERE er.estimate_request_id = e.estimate_request_id AND
-      e.is_hiding = TRUE AND
-      e.status <> 'cancelled' AND
-      er.estimate_request_id = arg_estimate_request_id
+    FROM marche_halibaba.estimates e
+    WHERE e.is_hiding = TRUE AND
+      e.is_cancelled = FALSE AND
+      e.estimate_request_id = arg_estimate_request_id
   ) THEN
     SELECT e.estimate_id, e.description, e.price,
-        count(DISTINCT eo.option_id), e.submission_date, e.house_id
-      INTO out
-      FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-        LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
-          eo.estimate_id = e.estimate_id
-      WHERE er.estimate_request_id = e.estimate_request_id AND
-        e.is_hiding = TRUE AND
-        e.status <> 'cancelled' AND
-        er.estimate_request_id = arg_estimate_request_id
-      GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id;
-
+      count(DISTINCT eo.option_id), e.submission_date, e.house_id
+    INTO out
+    FROM marche_halibaba.estimates e
+      LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
+        eo.estimate_id = e.estimate_id
+    WHERE e.is_hiding = TRUE AND
+      e.is_cancelled = FALSE AND
+      e.estimate_request_id = arg_estimate_request_id
+    GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id;
     RETURN NEXT out;
     RETURN;
   END IF;
@@ -208,21 +187,19 @@ BEGIN
   -- All estimates for this estimate request are returned
   FOR cur_estimate IN (
     SELECT e.estimate_id, e.description, e.price,
-        count(DISTINCT eo.option_id), e.submission_date, e.house_id
-      FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-        LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
-          eo.estimate_id = e.estimate_id
-      WHERE er.estimate_request_id = e.estimate_request_id AND
-        e.status = 'submitted' AND
-        er.estimate_request_id = arg_estimate_request_id
-      GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id
+      count(DISTINCT eo.option_id), e.submission_date, e.house_id
+    FROM marche_halibaba.estimates e
+      LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
+        eo.estimate_id = e.estimate_id
+    WHERE e.is_cancelled = FALSE AND
+      e.estimate_request_id = arg_estimate_request_id
+    GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id
   ) LOOP
-    SELECT cur_estimate.*INTO out;
+    SELECT cur_estimate.* INTO out;
     RETURN NEXT out;
   END LOOP;
   RETURN;
 
-  RETURN;
 END;
 $$ LANGUAGE 'plpgsql';
 
@@ -280,52 +257,38 @@ DECLARE
   estimate_details RECORD;
   option INTEGER;
 BEGIN
+
+  SELECT e.estimate_request_id as estimate_request_id,
+    e.is_cancelled as is_cancelled, (er.pub_date + INTERVAL '15 days') as expiration_date,
+    er.chosen_estimate as chosen_estimate
+  INTO estimate_details
+  FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
+  WHERE er.estimate_request_id = e.estimate_request_id AND
+    e.estimate_id = arg_estimate_id;
+
   -- An exception is raised if a estimate has already been approved for this estimate request
-  IF EXISTS(
-    SELECT *
-      FROM marche_halibaba.estimates e
-      WHERE e.estimate_request_id = (
-        SELECT e2.estimate_request_id
-          FROM marche_halibaba.estimates e2
-          WHERE e2.estimate_id = arg_estimate_id
-      ) AND e.status = 'approved'
-  )THEN
+  IF estimate_details.chosen_estimate IS NOT NULL THEN
     RAISE EXCEPTION 'Un devis a déjà été approuvé pour cette demande.';
   END IF;
 
-  SELECT e.estimate_request_id as estimate_request_id,
-      e.status as status, (er.pub_date + INTERVAL '15 days') as expiration_date
-    INTO estimate_details
-    FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-    WHERE er.estimate_request_id = e.estimate_request_id AND
-      e.estimate_id = arg_estimate_id;
-
   -- An exception is raised because the estimate has been cancelled
-  IF estimate_details.status <> 'submitted' THEN
+  IF estimate_details.is_cancelled THEN
     RAISE EXCEPTION 'Ce devis n est pas valide.';
   -- An exception is raised because the estimate request has expired
   ELSIF estimate_details.expiration_date < NOW() THEN
     RAISE EXCEPTION 'Cette demande de devis est expirée.';
   -- The estimate and the chosen options are succesfully approved
   ELSE
-    UPDATE marche_halibaba.estimates
-      SET status = 'approved'
-      WHERE estimate_id = arg_estimate_id;
-
-    UPDATE marche_halibaba.estimates
-      SET status = 'unapproved'
-      WHERE estimate_id IN (
-        SELECT e.estimate_id
-          FROM marche_halibaba.estimates e
-          WHERE e.estimate_request_id = estimate_details.estimate_request_id AND
-            e.status = 'submitted'
-      );
+    UPDATE marche_halibaba.estimate_requests
+    SET chosen_estimate = arg_estimate_id
+    WHERE estimate_request_id = estimate_details.estimate_request_id;
 
     FOREACH option IN ARRAY arg_chosen_options
     LOOP
       UPDATE marche_halibaba.estimate_options
-        SET is_chosen = TRUE
-        WHERE option_id = option;
+      SET is_chosen = TRUE
+      WHERE option_id = option AND
+        estimate_id = arg_estimate_id;
     END LOOP;
 
   END IF;
@@ -353,6 +316,48 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_requests_update()
+  RETURNS TRIGGER AS $$
+
+DECLARE
+  approved_estimate_house_id INTEGER;
+  approved_estimate_price NUMERIC(12,2);
+  approved_estimates_nbr NUMERIC(16,2);
+  estimates_nbr NUMERIC(16,2);
+BEGIN
+  SELECT e.house_id, e.price
+  INTO approved_estimate_house_id, approved_estimate_price
+  FROM marche_halibaba.estimates e
+  WHERE e.estimate_id = NEW.chosen_estimate;
+
+  SELECT count(estimate_id)
+  INTO approved_estimates_nbr
+  FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
+  WHERE e.estimate_id = er.chosen_estimate AND
+    e.house_id = approved_estimate_house_id;
+
+  SELECT count(estimate_id)
+  INTO estimates_nbr
+  FROM marche_halibaba.estimates e
+  WHERE e.house_id = approved_estimate_house_id;
+
+  -- Updates house statistics
+  UPDATE marche_halibaba.houses
+  SET turnover = turnover + approved_estimate_price,
+    acceptance_rate = approved_estimates_nbr/estimates_nbr
+  WHERE house_id = approved_estimate_house_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_estimate_requests_update
+AFTER UPDATE on marche_halibaba.estimate_requests
+FOR EACH ROW
+WHEN (OLD.chosen_estimate IS NULL AND NEW.chosen_estimate IS NOT NULL)
+EXECUTE PROCEDURE marche_halibaba.trigger_estimate_requests_update();
+
+
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_options_update()
   RETURNS TRIGGER AS $$
 
@@ -362,16 +367,16 @@ DECLARE
 
 BEGIN
   SELECT h.house_id, h.turnover
-    INTO house_to_update, old_turnover
-    FROM marche_halibaba.estimate_options eo, marche_halibaba.options o, marche_halibaba.houses h
-    WHERE eo.option_id = o.option_id AND
-      o.house_id = h.house_id AND
-      eo.estimate_option_id = OLD.estimate_option_id;
+  INTO house_to_update, old_turnover
+  FROM marche_halibaba.estimate_options eo, marche_halibaba.options o, marche_halibaba.houses h
+  WHERE eo.option_id = o.option_id AND
+    o.house_id = h.house_id AND
+    eo.estimate_option_id = OLD.estimate_option_id;
 
   IF OLD.is_chosen = FALSE AND NEW.is_chosen = TRUE THEN
     UPDATE marche_halibaba.houses
-      SET turnover = old_turnover + OLD.price
-      WHERE house_id = house_to_update;
+    SET turnover = old_turnover + OLD.price
+    WHERE house_id = house_to_update;
   END IF;
 
   RETURN NEW;
@@ -379,136 +384,9 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trigger_estimate_options_update
-  AFTER UPDATE on marche_halibaba.estimate_options
-  FOR EACH ROW
-  WHEN (OLD.is_chosen IS DISTINCT FROM NEW.is_chosen)
-  EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
-
-
-CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimates_insert()
-  RETURNS TRIGGER AS $$
-
-DECLARE
-BEGIN
-  UPDATE marche_halibaba.houses
-    SET submitted_estimates_nbr = submitted_estimates_nbr + 1
-    WHERE house_id = NEW.house_id;
-  RETURN NEW;
-END;
-$$ LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trigger_estimates_insert
-  AFTER INSERT on marche_halibaba.estimates
-  FOR EACH ROW
-  EXECUTE PROCEDURE marche_halibaba.trigger_estimates_insert();
-
-
-CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimates_update()
-  RETURNS TRIGGER AS $$
-
-DECLARE
-  approved_estimates_nbr NUMERIC(16,2);
-  estimates_nbr NUMERIC(16,2);
-BEGIN
-
-  IF OLD.status = 'submitted' AND NEW.status = 'approved' THEN
-    SELECT count(estimate_id)
-      INTO approved_estimates_nbr
-      FROM marche_halibaba.estimates
-      WHERE status = 'approved' AND
-        house_id = OLD.house_id;
-
-    SELECT count(estimate_id)
-      INTO estimates_nbr
-      FROM marche_halibaba.estimates
-      WHERE house_id = OLD.house_id;
-
-    -- Updates house statistics
-    UPDATE marche_halibaba.houses
-      SET turnover = turnover + OLD.price,
-        acceptance_rate = approved_estimates_nbr/estimates_nbr,
-        submitted_estimates_nbr = submitted_estimates_nbr - 1
-      WHERE house_id = OLD.house_id;
-  ELSIF OLD.status = 'submitted' AND NEW.status <> 'approved' THEN
-    UPDATE marche_halibaba.houses
-      SET submitted_estimates_nbr = submitted_estimates_nbr - 1
-      WHERE house_id = OLD.house_id;
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trigger_estimates_update
-  AFTER UPDATE on marche_halibaba.estimates
-  FOR EACH ROW
-  WHEN (OLD.status IS DISTINCT FROM NEW.status)
-  EXECUTE PROCEDURE marche_halibaba.trigger_estimates_update();
-
-
--- Inserts clients
-SELECT marche_halibaba.signup_client('jeremy', 'blublu', 'Jeremy', 'Wagemans');
-
--- Inserts houses
-SELECT marche_halibaba.signup_house('philippe', 'blublu', 'Noble House');
-
--- Inserts estimate requests
-SELECT marche_halibaba.submit_estimate_request('Installation de nouveaux sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', null, null, null, null);
-SELECT marche_halibaba.submit_estimate_request('Installation de superbe sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', 'Ebre', '29b', '17487', 'Empuriabrava');
-SELECT marche_halibaba.submit_estimate_request('Installation d incroyable sanitaires', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', 'Ebre', '29b', '17487', 'Empuriabrava');
-
-UPDATE marche_halibaba.estimate_requests
-  SET pub_date = '2014-12-23'
-  WHERE estimate_request_id = 2;
-
--- Inserts estimates (temporary)
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 1', 1600, 1, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 2', 1600, 1, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 3', 1600, 1, 1);
-
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super 1', 1600, 2, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super 2', 1600, 2, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super 3', 1600, 2, 1);
-
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super bis 1', 1600, 3, 1);
-INSERT INTO marche_halibaba.estimates(description, price, is_hiding, estimate_request_id, house_id)
-  VALUES ('Super bis 2', 1600, TRUE, 3, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super bis 3', 1600, 3, 1);
-
--- Inserts options (temporary)
-INSERT INTO marche_halibaba.options(description, price, house_id)
-  VALUES ('Toilettes en or', 6000, 1);
-INSERT INTO marche_halibaba.options(description, price, house_id)
-  VALUES ('Toilettes en argent', 4000, 1);
-INSERT INTO marche_halibaba.options(description, price, house_id)
-  VALUES ('Toilettes en bronze', 2000, 1);
-
--- Inserts estimate options (temporary)
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (6000, 1, 1);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (4000, 1, 2);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (2000, 1, 3);
-
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (6000, 3, 1);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (4000, 3, 2);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (2000, 3, 3);
-
--- Approves estimate 1 (temporary)
-SELECT marche_halibaba.approve_estimate(1, '{1,2}');
-
-SELECT * FROM marche_halibaba.list_estimates_for(1);
+AFTER UPDATE on marche_halibaba.estimate_options
+FOR EACH ROW
+WHEN (OLD.is_chosen IS DISTINCT FROM NEW.is_chosen)
+EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
 
 
