@@ -9,7 +9,7 @@ BEGIN
     WHERE house_id = NEW.house_id;
   RETURN NEW;
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE plpgsql;
 
 /**
 CREATE TRIGGER trigger_estimates_insert

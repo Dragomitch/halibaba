@@ -11,4 +11,4 @@ BEGIN
           er.pub_date + INTERVAL '15 days' < NOW() AND
           e.status = 'submitted');
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE plpgsql;

@@ -6,7 +6,7 @@ CREATE TYPE marche_halibaba.estimate
     description TEXT,
     price NUMERIC(12,2),
     options_nbr INTEGER,
-    pub_date TIMESTAMP,
+    submission_date TIMESTAMP,
     house_id INTEGER
   );
 
@@ -73,6 +73,7 @@ BEGIN
     WHERE e.is_cancelled = FALSE AND
       e.estimate_request_id = arg_estimate_request_id
     GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id
+    ORDER BY e.submission_date DESC
   ) LOOP
     SELECT cur_estimate.* INTO out;
     RETURN NEXT out;
@@ -80,4 +81,4 @@ BEGIN
   RETURN;
 
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE plpgsql;
