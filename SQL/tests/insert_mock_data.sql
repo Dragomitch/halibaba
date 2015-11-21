@@ -1,6 +1,6 @@
-CREATE OR REPLACE FUNCTION marche_halibaba.insert_mock_data()
+﻿CREATE OR REPLACE FUNCTION marche_halibaba.insert_mock_data()
   RETURNS void AS $$
-BEGIN;
+BEGIN
   -- Creates houses
   SELECT marche_halibaba.signup_house('clegane', 'blublu', 'House Clegane');
   SELECT marche_halibaba.signup_house('hornwood', 'blublu', 'House Hornwoord');
@@ -16,4 +16,4 @@ BEGIN;
   SELECT marche_halibaba.submit_estimate_request('Demande de devis 4', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', 'Ebre', '29b', '17487', 'Empuriabrava');
 
 END;
-$$ AS LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
