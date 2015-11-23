@@ -90,11 +90,11 @@ CREATE TABLE marche_halibaba.options (
 
 -- Estimate options
 CREATE TABLE marche_halibaba.estimate_options (
-  estimate_option_id SERIAL PRIMARY KEY,
   price NUMERIC(12,2) NOT NULL CHECK (price > 0),
   is_chosen BOOLEAN NOT NULL DEFAULT FALSE,
   estimate_id INTEGER NOT NULL
     REFERENCES marche_halibaba.estimates(estimate_id),
   option_id INTEGER NOT NULL
-    REFERENCES marche_halibaba.options(option_id)
+    REFERENCES marche_halibaba.options(option_id),
+  PRIMARY KEY(estimate_id, option_id)
 );
