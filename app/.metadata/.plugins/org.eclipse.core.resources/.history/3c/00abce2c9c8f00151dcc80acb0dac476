@@ -1,0 +1,6 @@
+#Dev environment
+dev_db_host=localhost
+dev_db_port=5432
+
+dev_username=
+dev_password=

@@ -1,0 +1,23 @@
+package marche_halibaba_clients;
+
+import java.sql.SQLException;
+
+public class ClientsApp {
+	
+	static String environment;
+
+	public static void main(String[] args) throws SQLException {
+		
+		if(args.length == 2 && args[0].equals("--env") && args[1].equals("dev")) {
+			ClientsApp.environment = "dev";
+			System.out.println("environnement de dev");
+		} else {
+			ClientsApp.environment = "prod";
+			System.out.println("environnement de prod");
+		}
+				
+		System.out.println(Db.getInstance().signIn("jeremy", "blublu"));
+		System.out.println(Db.getInstance().signUp("jeremy2", "blublu", "Jeremy", "Wagemans"));
+	}
+
+}

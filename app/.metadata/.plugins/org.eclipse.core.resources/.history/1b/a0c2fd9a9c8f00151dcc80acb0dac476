@@ -1,0 +1,8 @@
+#Dev environment
+dev_db_host=localhost
+dev_db_port=5432
+
+dev_username=client_app
+dev_password=2S5jn12JndG68hT
+
+#Prod environment

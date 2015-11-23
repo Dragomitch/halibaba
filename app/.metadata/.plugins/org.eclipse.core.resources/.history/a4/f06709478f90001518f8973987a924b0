@@ -1,0 +1,20 @@
+package marche_halibaba_clients;
+
+import java.sql.Date;
+
+public class EstimateRequest {
+	private int id;
+	private String description;
+	private Address constructionAddress;
+	private Address invoicingAddress;
+	private Date deadline;
+	private Date pubDate;
+	private Estimate chosenEstimate;
+	private Client client;
+	
+	public EstimateRequest() {
+		
+	}
+	
+	
+}

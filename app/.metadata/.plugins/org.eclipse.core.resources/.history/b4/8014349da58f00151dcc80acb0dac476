@@ -1,0 +1,52 @@
+package marche_halibaba_clients;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Properties;
+
+public class ClientsApp {
+	
+	public static String environment;
+
+	public static void main(String[] args) {
+		
+		if(args.length == 2 && args[0].equals("--env") && args[1].equals("dev")) {
+			ClientsApp.environment = "dev";
+			System.out.println("environnement de dev");
+		} else {
+			ClientsApp.environment = "prod";
+			System.out.println("environnement de prod");
+		}
+		
+		
+		Properties props = new Properties();
+		FileInputStream input = null;
+		
+		try {
+			input = new FileInputStream("config.properties");
+			props.load(input);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(1);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(2);
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException ignore) {}
+			}
+		}
+		
+		// Print properties
+		System.out.println(props.getProperty("dev_db_host"));
+		
+		DbConnection.getInstance();
+		
+
+		
+	}
+
+}

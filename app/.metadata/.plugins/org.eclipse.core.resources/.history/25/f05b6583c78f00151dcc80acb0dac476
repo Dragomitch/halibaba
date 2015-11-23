@@ -1,0 +1,15 @@
+#Dev environment
+dev_db_host=localhost
+dev_db_port=5432
+dev_db_name=projet
+dev_db_schema=marche_halibaba
+dev_db_username=PostgreSQL
+dev_db_password=?Ebre29b?
+
+#Prod environment
+prod_db_host=172.24.2.6
+prod_db_port=5432
+prod_db_database=jwagema15
+prod_db_schema=marche_halibaba
+prod_db_username=jwagema15
+prod_db_password=f6U3YBC

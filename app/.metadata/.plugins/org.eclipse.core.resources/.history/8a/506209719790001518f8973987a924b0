@@ -1,0 +1,64 @@
+package marche_halibaba_clients;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class EstimateRequest {
+	private int id;
+	private String description;
+	private Address constructionAddress;
+	private Address invoicingAddress;
+	private Date deadline;
+	private Date pubDate;
+	private Estimate[] submittedEstimates;
+	
+	public EstimateRequest(int id, String description, Date deadline, Date pubDate) {
+		this(id, description, null, null, deadline, pubDate);
+	}
+	
+	public EstimateRequest(int id, String description, Address constructionAddress, Address invoicingAddress,
+			Date deadline, Date pubDate) {
+		this.id = id;
+		this.description = description;
+		this.constructionAddress = constructionAddress;
+		this.invoicingAddress = invoicingAddress;
+		this.deadline = deadline;
+		this.pubDate = pubDate;
+	}
+	
+	public int getId() {
+		return id;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public Address getConstructionAddress() {
+		return constructionAddress;
+	}
+
+	public Address getInvoicingAddress() {
+		return invoicingAddress;
+	}
+
+	public Date getDeadline() {
+		return deadline;
+	}
+
+	public Date getPubDate() {
+		return pubDate;
+	}
+
+	public Estimate[] getSubmittedEstimates() {
+		return submittedEstimates;
+	}
+	
+	@Override
+	public String toString() {
+		return id + " - " + description + " - Deadline: " + 
+				new SimpleDateFormat("MM/dd/yyyy").format(deadline) +
+				" - Publish date: " + new SimpleDateFormat("MM/dd/yyyy").format(pubDate);
+	}
+	
+}

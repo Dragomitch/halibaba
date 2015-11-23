@@ -1,0 +1,13 @@
+package marche_halibaba_clients;
+
+public class House {
+	private int id;
+	private String name;
+	private double turnover;
+	private double acceptanceRate;
+	private int caughtCheatingNbr;
+	private int caughtCheaterNbr;
+	
+	public House() {}
+	
+}

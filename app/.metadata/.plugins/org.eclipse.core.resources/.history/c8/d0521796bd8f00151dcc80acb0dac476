@@ -1,0 +1,9 @@
+package marche_halibaba_clients;
+
+public class Clients {
+	private int id;
+	private String firstName;
+	private String lastName;
+	
+	public Client() {}
+}
