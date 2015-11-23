@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[])
+CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[], INTEGER[])
   RETURNS INTEGER AS $$
 
 DECLARE
@@ -9,8 +9,11 @@ DECLARE
   arg_estimate_request_id ALIAS FOR $5;
   arg_house_id ALIAS FOR $6;
   arg_chosen_options ALIAS FOR $7;
+  arg_price_options ALIAS FOR $8;
   new_estimate_request_id INTEGER;
   caught_cheating_house_id INTEGER;
+  nbr_chosen_options INTEGER := array_upper(arg_chosen_options::int[], 1);
+  nbr_price_options INTEGER := array_upper(arg_price_options::int[], 1);
   house_times_record RECORD;
 BEGIN
   
@@ -90,10 +93,20 @@ BEGIN
       WHERE house_id= arg_house_id;
     END IF;
   END IF;
-  
+
   INSERT INTO marche_halibaba.estimates(description, price, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
   VALUES (arg_description, arg_price, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
     RETURNING estimate_id INTO new_estimate_request_id;
+
+  IF nbr_price_options IS NOT NULL AND nbr_chosen_options IS NOT NULL AND nbr_chosen_options= nbr_price_options
+  THEN
+    FOR i IN 1 .. nbr_chosen_options
+    LOOP
+      INSERT INTO marche_halibaba.estimate_options
+      VALUES (arg_price_options[i], FALSE, new_estimate_request_id , arg_chosen_options[i]);
+    END LOOP;
+  END IF;
+
   RETURN new_estimate_request_id;
 
 END;

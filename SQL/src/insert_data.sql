@@ -15,50 +15,25 @@ UPDATE marche_halibaba.estimate_requests
   SET pub_date = '2014-12-23'
   WHERE estimate_request_id = 2;
 
--- Inserts estimates (temporary)
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 1', 1600, 1, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 2', 1600, 1, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super toilettes 3', 1600, 1, 1);
+-- Inserts options
+SELECT marche_halibaba.add_option('Toilettes en or', 6000, 1);
+SELECT marche_halibaba.add_option('Toilettes en argent', 4000, 1);
+SELECT marche_halibaba.add_option('Toilettes en bronze', 2000, 1);
 
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super 1', 1600, 2, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super 2', 1600, 2, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super 3', 1600, 2, 1);
 
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super bis 1', 1600, 3, 1);
-INSERT INTO marche_halibaba.estimates(description, price, is_hiding, estimate_request_id, house_id)
-  VALUES ('Super bis 2', 1600, TRUE, 3, 1);
-INSERT INTO marche_halibaba.estimates(description, price, estimate_request_id, house_id)
-  VALUES ('Super bis 3', 1600, 3, 1);
+-- Inserts estimates
+SELECT marche_halibaba.submit_estimate('Super toilettes 1', 1600,FALSE, FALSE, 1, 1, '{1,2,3}', '{6000,4000,2000}');
+SELECT marche_halibaba.submit_estimate('Super toilettes 2', 2000,FALSE, FALSE, 1, 1, '{}', '{}');
+SELECT marche_halibaba.submit_estimate('Super toilettes 3', 3000,FALSE, FALSE, 1, 1, '{1,2,3}', '{6000,4000,2000}');
 
--- Inserts options (temporary)
-INSERT INTO marche_halibaba.options(description, price, house_id)
-  VALUES ('Toilettes en or', 6000, 1);
-INSERT INTO marche_halibaba.options(description, price, house_id)
-  VALUES ('Toilettes en argent', 4000, 1);
-INSERT INTO marche_halibaba.options(description, price, house_id)
-  VALUES ('Toilettes en bronze', 2000, 1);
+SELECT marche_halibaba.submit_estimate('Super 1', 400,FALSE, FALSE, 2, 1, '{}', '{}');
+SELECT marche_halibaba.submit_estimate('Super 2', 600,FALSE, FALSE, 2, 1, '{}', '{}');
+SELECT marche_halibaba.submit_estimate('Super 3', 800,FALSE, FALSE, 2, 1, '{}', '{}');
 
--- Inserts estimate options (temporary)
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (6000, 1, 1);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (4000, 1, 2);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (2000, 1, 3);
+SELECT marche_halibaba.submit_estimate('Super bis 1', 800,FALSE, FALSE, 3, 1, '{}', '{}');
+SELECT marche_halibaba.submit_estimate('Super bis 2', 1600, TRUE, FALSE, 3, 1, '{}', '{}');
+SELECT marche_halibaba.submit_estimate('Super bis 3', 3200,FALSE, FALSE, 3, 1, '{}', '{}');
 
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (6000, 3, 1);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (4000, 3, 2);
-INSERT INTO marche_halibaba.estimate_options(price, estimate_id, option_id)
-  VALUES (2000, 3, 3);
 
 -- Approves estimate 1 (temporary)
 SELECT marche_halibaba.approve_estimate(1, '{1,2}');

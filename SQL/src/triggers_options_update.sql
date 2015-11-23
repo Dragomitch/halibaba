@@ -11,7 +11,9 @@ BEGIN
   FROM marche_halibaba.estimate_options eo, marche_halibaba.options o, marche_halibaba.houses h
   WHERE eo.option_id = o.option_id AND
     o.house_id = h.house_id AND
-    eo.estimate_option_id = OLD.estimate_option_id;
+    OLD.estimate_id= eo.estimate_id AND
+    OLD.option_id= eo.option_id;
+
 
   IF OLD.is_chosen = FALSE AND NEW.is_chosen = TRUE THEN
     UPDATE marche_halibaba.houses
