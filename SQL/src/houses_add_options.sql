@@ -8,7 +8,8 @@ DECLARE
   arg_house_id ALIAS FOR $3;
   new_option_id INTEGER;
 BEGIN
-  INSERT INTO marche_halibaba.options(description, price, house_id) VALUES (arg_description, arg_price, arg_house_id) RETURNING option_id INTO new_option_id;
+  INSERT INTO marche_halibaba.options(description, price, house_id) 
+  VALUES (arg_description, arg_price, arg_house_id) RETURNING option_id INTO new_option_id;
   RETURN new_option_id;
 END;
 $$ LANGUAGE 'plpgsql';

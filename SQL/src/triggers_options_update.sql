@@ -25,5 +25,5 @@ $$ LANGUAGE 'plpgsql';
 CREATE TRIGGER trigger_estimate_options_update
 AFTER UPDATE on marche_halibaba.estimate_options
 FOR EACH ROW
-WHEN (OLD.is_chosen = FALSE AND NEW.is_chosen = TRUE)
+WHEN (OLD.is_chosen IS DISTINCT FROM NEW.is_chosen)
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();

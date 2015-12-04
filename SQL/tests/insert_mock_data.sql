@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION marche_halibaba.insert_mock_data()
+﻿CREATE OR REPLACE FUNCTION marche_halibaba.insert_mock_data()
   RETURNS void AS $$
 BEGIN
   -- Creates houses
@@ -21,5 +21,8 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+<<<<<<< HEAD
+=======
 
 SELECT marche_halibaba.insert_mock_data();
+>>>>>>> clients-sql
