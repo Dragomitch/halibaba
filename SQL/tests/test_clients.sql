@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION unit_tests.test_signup()
+CREATE OR REPLACE FUNCTION unit_tests.test_clients()
   RETURNS test_result AS $$
 DECLARE
   message test_result;
@@ -12,12 +12,16 @@ BEGIN
     RETURN message;
   END IF;
 
-  IF (
-    SELECT count(*)
-    FROM marche_halibaba.houses h, marche_halibaba.users u
-    WHERE c.user_id = u.user_id
-  ) <> 2 THEN
-    SELECT assert.fail('Toutes les maisons n ont pas été insérés.') INTO message;
+  IF NOT EXISTS (
+    SELECT *
+    FROM marche_halibaba.clients c, marche_halibaba.users u
+    WHERE c.user_id = u.user_id AND
+      c.last_name = 'Wagemans' AND
+      c.first_name = 'Jeremy' AND
+      u.username = 'jeremy' AND
+      u.pswd = 'blublu'
+    ) THEN
+    SELECT assert.fail('L insertion des clients est incorrecte.') INTO message;
     RETURN message;
   END IF;
 
