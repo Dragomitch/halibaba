@@ -1,4 +1,4 @@
-package marche_halibaba_clients;
+package marche_halibaba_houses;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -12,7 +12,7 @@ public class Utils {
 	public static Scanner scanner = new Scanner(System.in);
 	
 	public static void blockProgress() {
-		System.out.println("[Appuyez sur ENTER pour continuer]");
+		System.out.println("\n[Appuyez sur ENTER pour continuer]");
         
 		try {
             scanner.nextLine();
@@ -73,12 +73,13 @@ public class Utils {
 	public static boolean readOorN(){
 		char response = scanner.nextLine().charAt(0);
 		
-		while (response != 'O' && response != 'N'){
+		while (response != 'O' && response != 'o' &&
+				response != 'N' && response != 'n'){
 			System.out.println("Veuillez répondre O (oui) ou N (non).");
 			response = scanner.nextLine().charAt(0);
 		}
 		
-		return response == 'O';
+		return response == 'O' || response == 'o';
 	}
 
 }

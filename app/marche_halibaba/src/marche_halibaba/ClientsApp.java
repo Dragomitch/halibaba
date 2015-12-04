@@ -1,40 +1,45 @@
-package marche_halibaba_clients;
+package marche_halibaba;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
-public class ClientApp {
+public class ClientsApp {
 	
 	private int clientId;
+	private Connection dbConnection;
+	private Map<String, PreparedStatement> preparedStmts;
 	
 	public static void main(String[] args) {
-		//TODO: trouver un beau nom pour ces variables booléennes
-		boolean isRunning = true;
+		ClientsApp session = new ClientsApp();
 		
-		while(isRunning) {
-			ClientApp session = new ClientApp();
-			
-			System.out.println("********************************************");
-			System.out.println("Bienvenue sur le Marche d'Halibaba - Clients");
-			System.out.println("********************************************");
+		boolean isUsing = true;
+		while(isUsing) {
+			System.out.println("\n************************************************");
+			System.out.println("* Bienvenue sur le Marche d'Halibaba - Clients *");
+			System.out.println("************************************************");
 			System.out.println("1 - Se connecter");
 			System.out.println("2 - Créer un compte");
 			System.out.println("3 - Quitter");
-					
+			
+			System.out.println("\nQuel est votre choix? (1-3)");	
 			int userChoice = Utils.readAnIntegerBetween(1, 3);
 			
 			switch(userChoice) {
 			case 1:
 				
-				if((session.clientId = session.login()) > 0) {
+				if((session.clientId = session.signin()) > 0) {
 					session.menu();
 				}
 				
+				session.clientId = 0;
 				break;
 			case 2:
 				
@@ -42,41 +47,101 @@ public class ClientApp {
 					session.menu();
 				}
 				
+				session.clientId = 0;
 				break;
 			case 3:
-				isRunning = false;
+				isUsing = false;
 				break;
 			}
 			
 		}
+		
+		try {
+			session.dbConnection.close();
+		} catch(SQLException e) {
+			e.printStackTrace();
+		}
+		
 			
 	}
 	
-	public ClientApp() {
-		//Initialiser la connexion
-		//Initialiser tous les prepare statements
+	public ClientsApp() {
+		
+		try {
+			Class.forName("org.postgresql.Driver");
+		} catch (ClassNotFoundException e) {
+			System.out.println("Driver PostgreSQL manquant !");
+			System.exit(1);
+		}
+		
+		// Dev
+		String url = "jdbc:postgresql://localhost:5432/projet?user=app&password=2S5jn12JndG68hT";
+		
+		// Prod
+		//String url = "jdbc:postgresql://localhost:5432/projet?user=app&password=2S5jn12JndG68hT";
+		
+		try {
+			this.dbConnection = DriverManager.getConnection(url);
+		} catch (SQLException e) {
+			System.out.println("Impossible de joindre le server !");
+			System.exit(1);
+		}
+		
+		this.preparedStmts = new HashMap<String, PreparedStatement>();
+		
+		try {
+			preparedStmts.put("signup", dbConnection.prepareStatement("SELECT marche_halibaba.signup_client(?, ?, ?, ?)"));
+			
+			preparedStmts.put("signin", dbConnection.prepareStatement("SELECT c_id, u_pswd " +
+					"FROM marche_halibaba.signin_users " +
+					"WHERE u_username = ?"));
+			
+			preparedStmts.put("estimateRequests", dbConnection.prepareStatement("SELECT er.estimate_request_id, er.description, er.pub_date " +
+					"FROM marche_halibaba.estimate_requests er " +
+					"WHERE er.pub_date + INTERVAL '15' day >= NOW() AND " +
+					"er.chosen_estimate IS NULL AND " +
+					"er.client_id = ? " +
+					"ORDER BY er.pub_date DESC"));
+			
+			preparedStmts.put("submitEstimateRequests",  dbConnection.prepareStatement("SELECT marche_halibaba.submit_estimate_request(?,?,?,?,?,?,?,?,?,?,?)"));
+			
+			preparedStmts.put("estimates", dbConnection.prepareStatement("SELECT e_id, e_description, e_price, " +
+					"e_submission_date, e_estimate_request_id, e_house_id, e_house_name " +
+					"FROM marche_halibaba.clients_list_estimates " +
+					"WHERE e_estimate_request_id = ?"));
+			
+			preparedStmts.put("estimate", null);
+			
+			preparedStmts.put("approveEstimateRequests", dbConnection.prepareStatement("SELECT marche_halibaba.approve_estimate(?, [])"));
+
+			preparedStmts.put("statistics", dbConnection.prepareStatement("SELECT h.name, h.turnover, h.acceptance_rate, " + 
+					"h.caught_cheating_nbr, h.caught_cheater_nbr " +
+					"FROM marche_halibaba.houses h "));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+
 	}
 	
-	private int login() {
+	private int signin() {
+		System.out.println("\nSe connecter");
+		System.out.println("************************************************\n");
 		
 		boolean isUsing = true;
-		
 		while(isUsing) {
-			System.out.println("Se connecter");
-			System.out.println("------------");
-			System.out.println("Votre nom d'utilisateur:");
+			System.out.print("Votre nom d'utilisateur : ");
 			String username = Utils.scanner.nextLine();
-			System.out.println("Votre mot de passe:");
+			System.out.print("Votre mot de passe : ");
 			String pswd = Utils.scanner.nextLine();
 
 			try {
-				PreparedStatement ps = Db.connection.prepareStatement("SELECT c_id, u_pswd " +
-						"FROM marche_halibaba.signin_users " +
-						"WHERE u_username = ?");
+				PreparedStatement ps = preparedStmts.get("signin");
 				ps.setString(1, username);
 				ResultSet result = ps.executeQuery();
 				
 				if(result.next() && 
+						result.getInt(1) > 0 &&
 						PasswordHash.validatePassword(pswd, result.getString(2))) {
 					return result.getInt(1);
 				}
@@ -88,7 +153,7 @@ public class ClientApp {
 			} catch (SQLException e) {}
 			
 			System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est erroné.");
-			System.out.println("Voulez-vous réessayer?");
+			System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
 			
 			if(!Utils.readOorN()) {
 				isUsing = false;
@@ -100,8 +165,8 @@ public class ClientApp {
 	}
 	
 	private int signup() {
-		System.out.println("Inscription");
-		System.out.println("-----------");
+		System.out.println("\nInscription");
+		System.out.println("************************************************\n");
 		
 		boolean isUsing = true;
 		while (isUsing) {
@@ -118,12 +183,14 @@ public class ClientApp {
 				pswd = PasswordHash.createHash(pswd);
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
+				System.exit(1);
 			} catch (InvalidKeySpecException e) {
 				e.printStackTrace();
+				System.exit(1);
 			}
 			
 			try {
-				PreparedStatement ps = Db.connection.prepareStatement("SELECT marche_halibaba.signup_client(?, ?, ?, ?)");
+				PreparedStatement ps = preparedStmts.get("signup");
 				ps.setString(1, username);
 				ps.setString(2, pswd);
 				ps.setString(3, firstName);
@@ -137,13 +204,19 @@ public class ClientApp {
 				
 				return rs.getInt(1);
 			} catch (SQLException e) {
-				System.out.println("\nLes données saisies sont incorrectes.");
-				System.out.println("Voulez-vous réessayer?");
+				
+				if(e.getSQLState().equals("23505")) {
+					System.out.println("\nCe nom d'utilisateur est déjà utilisé.");
+				} else {
+					System.out.println("\nLes données saisies sont incorrectes.");
+				}
+				
+				System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
 				
 				if(!Utils.readOorN()) {
 					isUsing = false;
 				}
-			
+	
 			}
 
 		}
@@ -152,17 +225,18 @@ public class ClientApp {
 	}
 	
 	private void menu() {
-		boolean isRunning = true;
+		System.out.println("\nMenu");
+		System.out.println("************************************************\n");
 		
-		while(isRunning) {
-			System.out.println("Que désirez-vous faire ?");
-			
+		boolean isUsing = true;
+		while(isUsing) {
 			System.out.println("1. Consulter mes demandes de devis en cours");
 			System.out.println("2. Consulter mes demandes de devis acceptées");
 			System.out.println("3. Soumettre une demande de devis");
 			System.out.println("4. Afficher les statistiques des maisons");
 			System.out.println("5. Se déconnecter");
 			
+			System.out.println("\nQue désirez-vous faire ? (1 - 5)");
 			int choice = Utils.readAnIntegerBetween(1, 5);
 			
 			switch(choice) {
@@ -175,10 +249,10 @@ public class ClientApp {
 				submitEstimateRequest();
 				break;
 			case 4:
-				displayStats();
+				displayStatistics();
 				break;
 			case 5:
-				isRunning = false;
+				isUsing = false;
 				break;
 			}
 			
@@ -194,12 +268,7 @@ public class ClientApp {
 			String estimateRequestsStr = "";
 			
 			try {
-				PreparedStatement ps = Db.connection.prepareStatement("SELECT er.estimate_request_id, er.description, er.pub_date " +
-						"FROM marche_halibaba.estimate_requests er " +
-						"WHERE er.pub_date + INTERVAL '15' day >= NOW() AND " +
-						"er.chosen_estimate IS NULL AND " +
-						"er.client_id = ? " +
-						"ORDER BY er.pub_date DESC");
+				PreparedStatement ps = preparedStmts.get("estimateRequests");
 				ps.setInt(1, clientId);
 				ResultSet rs = ps.executeQuery();
 				
@@ -247,10 +316,7 @@ public class ClientApp {
 		String estimatesStr = "";
 			
 		try {
-			PreparedStatement ps = Db.connection.prepareStatement("SELECT e_id, e_description, e_price, " +
-					"e_submission_date, e_estimate_request_id, e_house_id, e_house_name " +
-					"FROM marche_halibaba.clients_list_estimates " +
-					"WHERE e_estimate_request_id = ?");
+			PreparedStatement ps = preparedStmts.get("estimateRequest");
 			ps.setInt(1, id);
 			ResultSet rs = ps.executeQuery();
 			
@@ -292,7 +358,7 @@ public class ClientApp {
 		if(Utils.readOorN()) {
 
 			try {
-				PreparedStatement ps = Db.connection.prepareStatement("SELECT marche_halibaba.approve_estimate(?, [])");
+				PreparedStatement ps = preparedStmts.get("approveEstimateRequests");
 				ps.setInt(1, id);
 				ResultSet rs = ps.executeQuery();
 				rs.next();
@@ -313,18 +379,18 @@ public class ClientApp {
 		System.out.println("Date souhaitée de fin des travaux (jj/mm/aaaa):");
 		Date deadline = Utils.readDate();
 		
-		HashMap<String, String> constructionAddress = enterAddress();
+		Map<String, String> constructionAddress = enterAddress();
 		
 		System.out.println("L'adresse de facturation est-elle différente de l'adresse des travaux ? O (oui) - N (non)");
 		
-		HashMap<String, String> invoicingAddress = null;
+		Map<String, String> invoicingAddress = null;
 		
 		if(Utils.readOorN()) {
 			invoicingAddress = enterAddress();
 		}
 		
 		try {
-			PreparedStatement ps = Db.connection.prepareStatement("SELECT marche_halibaba.submit_estimate_request(?,?,?,?,?,?,?,?,?,?,?)");
+			PreparedStatement ps = preparedStmts.get("estimate_requests");
 			ps.setString(1, description);
 			ps.setDate(2, new java.sql.Date(deadline.getTime()));
 			ps.setInt(3, clientId);
@@ -352,13 +418,11 @@ public class ClientApp {
 
 	}
 	
-	private void displayStats() {
+	private void displayStatistics() {
 		System.out.println("Statistiques:");
 		
 		try {
-			PreparedStatement ps = Db.connection.prepareStatement("SELECT h.name, h.turnover, h.acceptance_rate, " + 
-					"h.caught_cheating_nbr, h.caught_cheater_nbr " +
-					"FROM marche_halibaba.houses h ");
+			PreparedStatement ps = preparedStmts.get("statistics");
 			ResultSet rs = ps.executeQuery();
 			
 			while(rs.next()) {
@@ -374,8 +438,8 @@ public class ClientApp {
 		Utils.blockProgress();		
 	}
 	
-	private HashMap<String, String> enterAddress() {
-		HashMap<String, String> address = new HashMap<String, String>();
+	private Map<String, String> enterAddress() {
+		Map<String, String> address = new HashMap<String, String>();
 		
 		System.out.println("Nom de la rue: ");
 		address.put("streetName", Utils.scanner.nextLine());

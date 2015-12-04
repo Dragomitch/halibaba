@@ -1,4 +1,4 @@
-package marche_halibaba_clients;
+package marche_halibaba_houses;
 
 import java.security.SecureRandom;
 import javax.crypto.spec.PBEKeySpec;
