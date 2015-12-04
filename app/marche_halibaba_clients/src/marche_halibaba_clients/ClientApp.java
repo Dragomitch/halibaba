@@ -52,6 +52,11 @@ public class ClientApp {
 			
 	}
 	
+	public ClientApp() {
+		//Initialiser la connexion
+		//Initialiser tous les prepare statements
+	}
+	
 	private int login() {
 		
 		boolean isUsing = true;
@@ -127,7 +132,7 @@ public class ClientApp {
 				rs.next();
 				
 				System.out.println("\nVotre compte a bien été créé.");
-				System.out.println("Vous allez maintenant être redirigé sur la page d'accueil de l'application.");
+				System.out.println("Vous allez maintenant être redirigé vers la page d'accueil de l'application.");
 				Utils.blockProgress();
 				
 				return rs.getInt(1);
@@ -238,18 +243,65 @@ public class ClientApp {
 	}
 	
 	private void displayEstimateRequest(int id) {
+		HashMap<Integer, Integer> estimates = new HashMap<Integer, Integer>();
+		String estimatesStr = "";
+			
+		try {
+			PreparedStatement ps = Db.connection.prepareStatement("SELECT e_id, e_description, e_price, " +
+					"e_submission_date, e_estimate_request_id, e_house_id, e_house_name " +
+					"FROM marche_halibaba.clients_list_estimates " +
+					"WHERE e_estimate_request_id = ?");
+			ps.setInt(1, id);
+			ResultSet rs = ps.executeQuery();
+			
+			int i = 1;
+			while(rs.next()) {
+				estimates.put(i, rs.getInt(1));
+				estimatesStr += i + ". " + rs.getString(2) + " - Prix: " + rs.getDate(3) + "€\n";
+				i++;
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		
-		System.out.println("Que voulez-vous faire ?");
-		System.out.println("1. Sélectionner un devis");
-		System.out.println("2. Retour");
+		System.out.println(estimatesStr);
 		
-		if(Utils.readAnIntegerBetween(1, 2) == 1) {
-			approveEstimate();
+		if(estimates.size() > 0) {
+			System.out.println("Que voulez-vous faire ?");
+			System.out.println("1. Accepter un devis");
+			System.out.println("2. Retour");
+			
+			if(Utils.readAnIntegerBetween(1, 2) == 1) {
+				System.out.println(estimatesStr);
+				System.out.println("Quel devis voulez-vous accepter ?");
+				int userChoice = Utils.readAnIntegerBetween(1, estimates.size());
+				approveEstimate(estimates.get(userChoice));	
+			}
+			
+		} else {
+			System.out.println("Il n'y a aucun devis soumis pour cette demande.\n");
+			Utils.blockProgress();
 		}
 		
 	}
 	
-	private void approveEstimate() {
+	private void approveEstimate(int id) {
+		System.out.println("Etes-vous sûr de vouloir accepter ce devis ? Oui (O) - Non (N)");
+		
+		if(Utils.readOorN()) {
+
+			try {
+				PreparedStatement ps = Db.connection.prepareStatement("SELECT marche_halibaba.approve_estimate(?, [])");
+				ps.setInt(1, id);
+				ResultSet rs = ps.executeQuery();
+				rs.next();
+				System.out.println("Le devis a bien été accepté");
+			} catch (SQLException e) {
+				System.out.println("Vous ne pouvez pas accepter ce devis.");
+			}
+			
+		}
 		
 	}
 	

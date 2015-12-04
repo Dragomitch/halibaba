@@ -1,5 +1,5 @@
 -- Lists submitted estimate requests
-SELECT er.estimate_request_id, er.description, er.deadline, er.pub_date
+SELECT er.estimate_request_id, er.description, er.deadline, (er.pub_date + INTERVAL '15' days) - NOW()
 FROM marche_halibaba.estimate_requests er
 WHERE er.pub_date + INTERVAL '15' day >= NOW() AND
   er.chosen_estimate IS NULL AND

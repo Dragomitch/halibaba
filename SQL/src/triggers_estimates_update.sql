@@ -35,6 +35,7 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trigger_estimates_update
-BEFORE UPDATE ON marche_halibaba.estimates
+BEFORE UPDATE on marche_halibaba.estimates
 FOR EACH ROW
+WHEN NEW.chosen_estimate IS NOT NULL
 EXECUTE PROCEDURE marche_halibaba.trigger_estimates_update();
