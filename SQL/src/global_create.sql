@@ -1,5 +1,6 @@
 -- Removes all previous data
 DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
+DROP SCHEMA IF EXISTS unit_tests CASCADE;
 
 -- Schema
 CREATE SCHEMA marche_halibaba;
