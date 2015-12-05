@@ -26,7 +26,7 @@ public class ClientsApp {
 			System.out.println("* Bienvenue sur le Marche d'Halibaba - Clients *");
 			System.out.println("************************************************");
 			System.out.println("1 - Se connecter");
-			System.out.println("2 - Créer un compte");
+			System.out.println("2 - Creer un compte");
 			System.out.println("3 - Quitter");
 			
 			System.out.println("\nQuel est votre choix? (1-3)");	
@@ -55,6 +55,8 @@ public class ClientsApp {
 			}
 			
 		}
+		
+		System.out.println("Merci de votre visite. A bientot!");
 		
 		try {
 			session.dbConnection.close();
@@ -152,8 +154,8 @@ public class ClientsApp {
 				e.printStackTrace();
 			} catch (SQLException e) {}
 			
-			System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est erroné.");
-			System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
+			System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est errone.");
+			System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
 			
 			if(!Utils.readOorN()) {
 				isUsing = false;
@@ -172,7 +174,7 @@ public class ClientsApp {
 		while (isUsing) {
 			System.out.print("Votre nom: ");
 			String lastName = Utils.scanner.nextLine();
-			System.out.print("Votre prénom: ");
+			System.out.print("Votre prenom: ");
 			String firstName = Utils.scanner.nextLine();
 			System.out.print("Votre nom d'utilisateur: ");
 			String username = Utils.scanner.nextLine();
@@ -198,20 +200,20 @@ public class ClientsApp {
 				ResultSet rs = ps.executeQuery();
 				rs.next();
 				
-				System.out.println("\nVotre compte a bien été créé.");
-				System.out.println("Vous allez maintenant être redirigé vers la page d'accueil de l'application.");
+				System.out.println("\nVotre compte a bien ete cree.");
+				System.out.println("Vous allez maintenant etre redirige vers la page d'accueil de l'application.");
 				Utils.blockProgress();
 				
 				return rs.getInt(1);
 			} catch (SQLException e) {
 				
 				if(e.getSQLState().equals("23505")) {
-					System.out.println("\nCe nom d'utilisateur est déjà utilisé.");
+					System.out.println("\nCe nom d'utilisateur est déjà utilise.");
 				} else {
 					System.out.println("\nLes données saisies sont incorrectes.");
 				}
 				
-				System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
+				System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
 				
 				if(!Utils.readOorN()) {
 					isUsing = false;
@@ -231,12 +233,12 @@ public class ClientsApp {
 		boolean isUsing = true;
 		while(isUsing) {
 			System.out.println("1. Consulter mes demandes de devis en cours");
-			System.out.println("2. Consulter mes demandes de devis acceptées");
+			System.out.println("2. Consulter mes demandes de devis acceptees");
 			System.out.println("3. Soumettre une demande de devis");
 			System.out.println("4. Afficher les statistiques des maisons");
-			System.out.println("5. Se déconnecter");
+			System.out.println("5. Se deconnecter");
 			
-			System.out.println("\nQue désirez-vous faire ? (1 - 5)");
+			System.out.println("\nQue desirez-vous faire ? (1 - 5)");
 			int choice = Utils.readAnIntegerBetween(1, 5);
 			
 			switch(choice) {
@@ -275,7 +277,7 @@ public class ClientsApp {
 				int i = 1;
 				while(rs.next()) {
 					estimateRequests.put(i, rs.getInt(1));
-					estimateRequestsStr += i + ". " + rs.getString(2) + " - Posté le " + rs.getDate(3) + "\n";
+					estimateRequestsStr += i + ". " + rs.getString(2) + " - Poste le " + rs.getDate(3) + "\n";
 					i++;
 				}
 				
@@ -293,7 +295,7 @@ public class ClientsApp {
 				
 				if(Utils.readAnIntegerBetween(1, 2) == 1) {
 					System.out.println(estimateRequestsStr);
-					System.out.println("Quel devis voulez-vous voir ?");
+					System.out.println("Pour quelle demande voulez-vous voir les devis soumis?");
 					int userChoice = Utils.readAnIntegerBetween(1, estimateRequests.size());
 					displayEstimateRequest(estimateRequests.get(userChoice));
 				} else {
@@ -353,7 +355,7 @@ public class ClientsApp {
 	}
 	
 	private void approveEstimate(int id) {
-		System.out.println("Etes-vous sûr de vouloir accepter ce devis ? Oui (O) - Non (N)");
+		System.out.println("Etes-vous sur de vouloir accepter ce devis ? Oui (O) - Non (N)");
 		
 		if(Utils.readOorN()) {
 
@@ -362,7 +364,7 @@ public class ClientsApp {
 				ps.setInt(1, id);
 				ResultSet rs = ps.executeQuery();
 				rs.next();
-				System.out.println("Le devis a bien été accepté");
+				System.out.println("Le devis a bien été accepte");
 			} catch (SQLException e) {
 				System.out.println("Vous ne pouvez pas accepter ce devis.");
 			}
@@ -376,12 +378,12 @@ public class ClientsApp {
 		System.out.println("------------------------------");
 		System.out.println("Description:");
 		String description = Utils.scanner.nextLine();
-		System.out.println("Date souhaitée de fin des travaux (jj/mm/aaaa):");
+		System.out.println("Date souhaitee de fin des travaux (jj/mm/aaaa):");
 		Date deadline = Utils.readDate();
 		
 		Map<String, String> constructionAddress = enterAddress();
 		
-		System.out.println("L'adresse de facturation est-elle différente de l'adresse des travaux ? O (oui) - N (non)");
+		System.out.println("L'adresse de facturation est-elle differente de l'adresse des travaux ? O (oui) - N (non)");
 		
 		Map<String, String> invoicingAddress = null;
 		
@@ -428,7 +430,7 @@ public class ClientsApp {
 			while(rs.next()) {
 				System.out.println(rs.getString(1));
 				System.out.println("\tChiffre d'affaire: " + rs.getDouble(2) 
-					+ "€\tTaux d'acceptation: " + rs.getDouble(3)  + "\tNbr de fois attrapé: " + rs.getInt(4) + "\tNbr de fois a attrapé: " + rs.getInt(5));
+					+ "€\tTaux d'acceptation: " + rs.getDouble(3)  + "\tNbr de fois attrape: " + rs.getInt(4) + "\tNbr de fois a attrape: " + rs.getInt(5));
 			}
 			
 		} catch (SQLException e) {
@@ -444,7 +446,7 @@ public class ClientsApp {
 		System.out.println("Nom de la rue: ");
 		address.put("streetName", Utils.scanner.nextLine());
 		
-		System.out.println("Numéro: ");
+		System.out.println("Numero: ");
 		address.put("streetNbr", Utils.scanner.nextLine());
 		
 		System.out.println("Code postal: ");
