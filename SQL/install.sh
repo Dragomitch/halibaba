@@ -7,6 +7,7 @@ scripts=()
 scripts+=('src/global_create.sql')
 scripts+=('src/global_signin.sql')
 scripts+=('src/global_estimate_details.sql')
+scripts+=('src/global_list_estimate_requests.sql')
 scripts+=('src/global_list_estimate_options.sql')
 scripts+=('src/clients_signup.sql')
 scripts+=('src/clients_list_estimates.sql')
@@ -22,7 +23,8 @@ scripts+=('src/triggers_estimate_insert.sql')
 scripts+=('src/triggers_estimate_requests_update.sql')
 scripts+=('src/triggers_options_update.sql')
 scripts+=('src/users.sql')
-scripts+=('src/view_all_submitted_requests.sql')
+#scripts+=('src/insert_data.sql')
+scripts+=('src/scenario_presentation.sql')
 
 for script in ${scripts[*]} ; do
 

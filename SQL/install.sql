@@ -132,6 +132,31 @@ CREATE VIEW marche_halibaba.estimate_details AS
   WHERE e.house_id = h.house_id;
 
 
+DROP VIEW IF EXISTS marche_halibaba.list_estimate_requests;
+
+CREATE VIEW marche_halibaba.list_estimate_requests AS
+  SELECT er.estimate_request_id AS "er_id",
+    er.description AS "er_description",
+    er.deadline AS "er_deadline",
+    er.pub_date AS "er_pub_date",
+    er.chosen_estimate AS "er_chosen_estimate",
+    a.street_name AS "er_construction_id",
+    a.zip_code AS "er_construction_zip",
+    a.city AS "er_construction_city",
+    a2.street_name AS "er_invoicing_street",
+    a2.zip_code AS "er_invoicing_zip",
+    a2.city AS "er_invoicing_city",
+    c.client_id AS "c_id",
+    c.last_name AS "c_last_name",
+    c.first_name AS "c_first_name",
+    (er.pub_date + INTERVAL '15' day) - NOW() AS "remaining_days"
+  FROM marche_halibaba.clients c, marche_halibaba.addresses a, marche_halibaba.estimate_requests er
+    LEFT OUTER JOIN marche_halibaba.addresses a2 ON er.invoicing_address = a2.address_id
+  WHERE a.address_id = er.construction_address
+    AND c.client_id = er.client_id
+  ORDER BY er.pub_date DESC;
+
+
 DROP VIEW IF EXISTS marche_halibaba.list_estimate_options;
 
 CREATE VIEW marche_halibaba.list_estimate_options AS
@@ -209,7 +234,8 @@ CREATE VIEW marche_halibaba.clients_list_estimates AS
         marche_halibaba.houses h
       WHERE e.estimate_id = er.chosen_estimate AND
         e.house_id = h.house_id
-    )) view;
+    )) view
+  ORDER BY view.submission_date DESC;
 
 /** DEPRECATED LOOSER MODE
 -- Custom type
@@ -342,21 +368,30 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-CREATE OR REPLACE FUNCTION marche_halibaba.approve_estimate(INTEGER, INTEGER[])
+CREATE OR REPLACE FUNCTION marche_halibaba.approve_estimate(INTEGER, INTEGER[], INTEGER)
   RETURNS INTEGER AS $$
 
 DECLARE
   arg_estimate_id ALIAS FOR $1;
   arg_chosen_options ALIAS FOR $2;
+  arg_client_id ALIAS FOR $3;
+  er_id INTEGER;
+  er_client_id INTEGER;
   option INTEGER;
 BEGIN
-  UPDATE marche_halibaba.estimate_requests
-  SET chosen_estimate = arg_estimate_id
-  WHERE estimate_request_id = estimate_details.estimate_request_id;
+  SELECT e.estimate_request_id, er.client_id
+  INTO er_id, er_client_id
+  FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
+  WHERE e.estimate_request_id = er.estimate_request_id AND
+    e.estimate_id = arg_estimate_id;
 
-  IF arg_chosen_options IS NULL THEN
-    RETURN 0;
+  IF er_client_id <> arg_client_id THEN
+    RAISE EXCEPTION 'Vous n etes pas autorise a accepter ce devis';
   END IF;
+
+  UPDATE marche_halibaba.estimate_requests er
+  SET chosen_estimate = arg_estimate_id
+  WHERE estimate_request_id = er_id;
 
   FOREACH option IN ARRAY arg_chosen_options
   LOOP
@@ -447,31 +482,28 @@ DECLARE
   arg_estimate_request_id ALIAS FOR $5;
   arg_house_id ALIAS FOR $6;
   arg_chosen_options ALIAS FOR $7;
-  new_estimate_request_id INTEGER;
-  nbr_chosen_options INTEGER := array_upper(arg_chosen_options::int[], 1);
+  new_estimate_id INTEGER;
+  option INTEGER;
   option_price NUMERIC(12,2);
 BEGIN
   INSERT INTO marche_halibaba.estimates(description, price, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
   VALUES (arg_description, arg_price, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
-    RETURNING estimate_id INTO new_estimate_request_id;
+    RETURNING estimate_id INTO new_estimate_id;
 
-  IF nbr_chosen_options IS NOT NULL -- If there are options selected
-  THEN
-    FOR i IN 1 .. nbr_chosen_options
-    LOOP
-      SELECT o.price INTO option_price
-      FROM marche_halibaba.options o
-      WHERE o.option_id= arg_chosen_options[i];
+  FOREACH option IN ARRAY arg_chosen_options
+  LOOP
+    SELECT o.price INTO option_price
+    FROM marche_halibaba.options o
+    WHERE o.option_id = option;
 
-      INSERT INTO marche_halibaba.estimate_options
-      VALUES (option_price, FALSE, new_estimate_request_id , arg_chosen_options[i]);
-    END LOOP;
-  END IF;
+    INSERT INTO marche_halibaba.estimate_options(price, is_chosen, estimate_id, option_id)
+    VALUES (option_price, FALSE, new_estimate_id, option);
+  END LOOP;
 
-  RETURN new_estimate_request_id;
-
+  RETURN new_estimate_id;
 END;
 $$ LANGUAGE 'plpgsql';
+
 
 DROP VIEW IF EXISTS marche_halibaba.valid_estimates_nbr;
 CREATE VIEW marche_halibaba.valid_estimates_nbr AS
@@ -588,22 +620,15 @@ CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_requests_update()
   RETURNS TRIGGER AS $$
 
 DECLARE
-  estimate_details RECORD;
-  approved_estimates_nbr NUMERIC(16,2);
-  estimates_nbr NUMERIC(16,2);
+  var_estimate_details RECORD;
+  var_acceptance_rate NUMERIC(3,2);
 BEGIN
   SELECT e.estimate_request_id as "estimate_request_id",
-    e.is_cancelled as "is_cancelled", (er.pub_date + INTERVAL '15' day) as "expiration_date",
-    e.price as "price",
+    e.is_cancelled as "is_cancelled", e.price as "price",
     e.house_id as "house_id"
-  INTO estimate_details
+  INTO var_estimate_details
   FROM marche_halibaba.estimates e
-  WHERE e.estimate_request_id = OLD.estimate_request_id AND -- Sert à vérifier que le devis est bien lié à cette demande de devis
-    e.estimate_id = NEW.chosen_estimate;
-
-  IF estimate_details IS NULL THEN
-    RAISE EXCEPTION 'Ce devis n appartient pas à cette demande de devis';
-  END IF;
+  WHERE e.estimate_id = NEW.chosen_estimate;
 
   -- An exception is raised if a estimate has already been approved for this estimate request
   IF OLD.chosen_estimate IS NOT NULL THEN
@@ -611,40 +636,38 @@ BEGIN
   END IF;
 
   -- An exception is raised because the estimate has been cancelled
-  IF estimate_details.is_cancelled THEN
-    RAISE EXCEPTION 'Ce devis n est pas valide.';
+  IF var_estimate_details.is_cancelled THEN
+    RAISE EXCEPTION 'Ce devis n est plus valide. Il a été annulé.';
   END IF;
 
   -- An exception is raised because the estimate request has expired
-  IF estimate_details.expiration_date < NOW() THEN
+  IF (OLD.pub_date + INTERVAL '15' day) < NOW() THEN
     RAISE EXCEPTION 'Cette demande de devis est expirée.';
   END IF;
 
   -- Updates house statistics
-  SELECT count(estimate_id)
-  INTO approved_estimates_nbr
-  FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
-  WHERE e.estimate_id = er.chosen_estimate AND
-    e.house_id = estimate_details.house_id;
-
-  SELECT count(estimate_id)
-  INTO estimates_nbr
-  FROM marche_halibaba.estimates e
-  WHERE e.house_id = estimate_details.house_id;
+  SELECT ((
+    SELECT count(estimate_id)
+    FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
+    WHERE e.estimate_id = er.chosen_estimate AND
+      e.house_id = var_estimate_details.house_id)::numeric(16,2)/(
+    SELECT count(estimate_id)
+    FROM marche_halibaba.estimates e
+    WHERE e.house_id = var_estimate_details.house_id)::numeric(16,2))::numeric(3,2)
+  INTO var_acceptance_rate;
 
   UPDATE marche_halibaba.houses
-  SET turnover = turnover + estimate_details.price,
-    acceptance_rate = approved_estimates_nbr/estimates_nbr
-  WHERE house_id = approved_estimate_house_id;
+  SET turnover = turnover + var_estimate_details.price,
+    acceptance_rate = var_acceptance_rate
+  WHERE house_id = var_estimate_details.house_id;
 
   RETURN NEW;
 END;
 $$ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trigger_estimate_requests_update
-BEFORE UPDATE on marche_halibaba.estimate_requests
+AFTER UPDATE OF chosen_estimate ON marche_halibaba.estimate_requests
 FOR EACH ROW
-WHEN (OLD.chosen_estimate IS NULL AND NEW.chosen_estimate IS NOT NULL)
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_requests_update();
 
 
@@ -731,26 +754,21 @@ ON ALL FUNCTIONS IN SCHEMA marche_halibaba
 TO pdragom15; */
 
 
-DROP VIEW IF EXISTS marche_halibaba.submitted_requests;
+-- Insère des clients
+SELECT marche_halibaba.signup_client('ramsey', '1000:ce2723bacc00ffd71a3c3dd7a712d16cfc023aa781d5fec5:b77f9f0e005c806c6577a0e5a423e4095c70f7a33b16d7a057c76237e4628adc8349555c6c314b6f08b115d45efe44643089823f849e2b27b55a353879b42895928c1ffb9f12b7b51a1b166c947b643c43716bc2a1a3996d185e00937c993454', 'Ramsey', 'GoT');
+SELECT marche_halibaba.submit_estimate_request('Nettoyer mes toilettes', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', null, null, null, null);
 
-CREATE VIEW marche_halibaba.submitted_requests AS
-  SELECT er.estimate_request_id AS "er_id", er.description AS "er_description",
-    a.street_name AS "er_construction_id",
-    a.zip_code AS "er_construction_zip",
-    a.city AS "er_construction_city",
-    er.deadline AS "er_deadline",
-    er.pub_date AS "er_publish_date",
-    a2.street_name AS "er_invoicing_street",
-    a2.zip_code AS "er_invoicing_zip",
-    a2.city AS "er_invoicing_city",
-    c.client_id AS "er_client_id",
-    c.last_name AS "er_client_last_name",
-    c.first_name AS "er_client_first_name",
-    c.user_id AS "client_user_id"
-  FROM marche_halibaba.clients c, marche_halibaba.addresses a, marche_halibaba.estimate_requests er
-    LEFT OUTER JOIN marche_halibaba.addresses a2 ON er.invoicing_address= a2.address_id
-  WHERE a.address_id=er.construction_address AND er.pub_date< NOW()+ INTERVAL '15' day
-    AND chosen_estimate IS NULL AND c.client_id= er.client_id
-  ORDER BY er.pub_date;
+SELECT marche_halibaba.signup_house('starque', '1000:ce2723bacc00ffd71a3c3dd7a712d16cfc023aa781d5fec5:b77f9f0e005c806c6577a0e5a423e4095c70f7a33b16d7a057c76237e4628adc8349555c6c314b6f08b115d45efe44643089823f849e2b27b55a353879b42895928c1ffb9f12b7b51a1b166c947b643c43716bc2a1a3996d185e00937c993454', 'Starque');
+SELECT marche_halibaba.add_option('Avec le sourire', 50, 1);
+SELECT marche_halibaba.submit_estimate('nettoyage', 100, FALSE, FALSE, 1, 1, '{1}');
+
+SELECT marche_halibaba.signup_house('boltone', '1000:ce2723bacc00ffd71a3c3dd7a712d16cfc023aa781d5fec5:b77f9f0e005c806c6577a0e5a423e4095c70f7a33b16d7a057c76237e4628adc8349555c6c314b6f08b115d45efe44643089823f849e2b27b55a353879b42895928c1ffb9f12b7b51a1b166c947b643c43716bc2a1a3996d185e00937c993454', 'Boltone');
+SELECT marche_halibaba.submit_estimate('nettoyage, sourire compris', 90, TRUE, FALSE, 1, 2, '{}');
+
+SELECT marche_halibaba.submit_estimate('99€ promo de Noël : nettoyage sans râler', 99, FALSE, TRUE, 1, 1, '{}');
+SELECT marche_halibaba.submit_estimate('80€ sans sourire', 80, FALSE, TRUE, 1, 2, '{}');
+SELECT marche_halibaba.submit_estimate('test 123', 10000, FALSE, FALSE, 1, 1, '{1}');
+
+SELECT marche_halibaba.approve_estimate(4, '{}',1);
 
 

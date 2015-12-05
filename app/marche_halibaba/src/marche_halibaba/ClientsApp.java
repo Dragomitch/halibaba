@@ -2,6 +2,7 @@ package marche_halibaba;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -11,122 +12,105 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClientsApp {
+public class ClientsApp extends App {
 	
-	private int clientId;
-	private Connection dbConnection;
-	private Map<String, PreparedStatement> preparedStmts;
+	private int clientId;	
 	
 	public static void main(String[] args) {
-		ClientsApp session = new ClientsApp();
-		
-		boolean isUsing = true;
-		while(isUsing) {
-			System.out.println("\n************************************************");
-			System.out.println("* Bienvenue sur le Marche d'Halibaba - Clients *");
-			System.out.println("************************************************");
-			System.out.println("1 - Se connecter");
-			System.out.println("2 - Creer un compte");
-			System.out.println("3 - Quitter");
+						
+		try {
+			ClientsApp session = new ClientsApp("app", "2S5jn12JndG68hT");
 			
-			System.out.println("\nQuel est votre choix? (1-3)");	
-			int userChoice = Utils.readAnIntegerBetween(1, 3);
-			
-			switch(userChoice) {
-			case 1:
+			boolean isUsing = true;
+			while(isUsing) {
+				System.out.println("\n************************************************");
+				System.out.println("* Bienvenue sur le Marche d'Halibaba - Clients *");
+				System.out.println("************************************************");
+				System.out.println("1 - Se connecter");
+				System.out.println("2 - Creer un compte");
+				System.out.println("3 - Quitter");
 				
-				if((session.clientId = session.signin()) > 0) {
-					session.menu();
+				System.out.println("\nQuel est votre choix? (1-3)");	
+				int userChoice = Utils.readAnIntegerBetween(1, 3);
+				
+				switch(userChoice) {
+				case 1:
+					
+					if(session.signin()) {
+						session.menu();
+					}
+					
+					session.clientId = 0;
+					break;
+				case 2:
+					
+					if(session.signup()) {
+						session.menu();
+					}
+					
+					session.clientId = 0;
+					break;
+				case 3:
+					isUsing = false;
+					break;
 				}
 				
-				session.clientId = 0;
-				break;
-			case 2:
-				
-				if((session.clientId = session.signup()) > 0) {
-					session.menu();
-				}
-				
-				session.clientId = 0;
-				break;
-			case 3:
-				isUsing = false;
-				break;
 			}
 			
-		}
-		
-		System.out.println("Merci de votre visite. A bientot!");
-		
-		try {
+			System.out.println("Merci de votre visite. A bientot!");
 			session.dbConnection.close();
+			
 		} catch(SQLException e) {
 			e.printStackTrace();
+			System.exit(1);
 		}
-		
 			
 	}
 	
-	public ClientsApp() {
-		
-		try {
-			Class.forName("org.postgresql.Driver");
-		} catch (ClassNotFoundException e) {
-			System.out.println("Driver PostgreSQL manquant !");
-			System.exit(1);
-		}
-		
-		// Dev
-		String url = "jdbc:postgresql://localhost:5432/projet?user=app&password=2S5jn12JndG68hT";
-		
-		// Prod
-		//String url = "jdbc:postgresql://localhost:5432/projet?user=app&password=2S5jn12JndG68hT";
-		
-		try {
-			this.dbConnection = DriverManager.getConnection(url);
-		} catch (SQLException e) {
-			System.out.println("Impossible de joindre le server !");
-			System.exit(1);
-		}
+	public ClientsApp(String dbUser, String dbPswd) throws SQLException {
+		super(dbUser, dbPswd);
 		
 		this.preparedStmts = new HashMap<String, PreparedStatement>();
 		
-		try {
-			preparedStmts.put("signup", dbConnection.prepareStatement("SELECT marche_halibaba.signup_client(?, ?, ?, ?)"));
-			
-			preparedStmts.put("signin", dbConnection.prepareStatement("SELECT c_id, u_pswd " +
-					"FROM marche_halibaba.signin_users " +
-					"WHERE u_username = ?"));
-			
-			preparedStmts.put("estimateRequests", dbConnection.prepareStatement("SELECT er.estimate_request_id, er.description, er.pub_date " +
-					"FROM marche_halibaba.estimate_requests er " +
-					"WHERE er.pub_date + INTERVAL '15' day >= NOW() AND " +
-					"er.chosen_estimate IS NULL AND " +
-					"er.client_id = ? " +
-					"ORDER BY er.pub_date DESC"));
-			
-			preparedStmts.put("submitEstimateRequests",  dbConnection.prepareStatement("SELECT marche_halibaba.submit_estimate_request(?,?,?,?,?,?,?,?,?,?,?)"));
-			
-			preparedStmts.put("estimates", dbConnection.prepareStatement("SELECT e_id, e_description, e_price, " +
-					"e_submission_date, e_estimate_request_id, e_house_id, e_house_name " +
-					"FROM marche_halibaba.clients_list_estimates " +
-					"WHERE e_estimate_request_id = ?"));
-			
-			preparedStmts.put("estimate", null);
-			
-			preparedStmts.put("approveEstimateRequests", dbConnection.prepareStatement("SELECT marche_halibaba.approve_estimate(?, [])"));
+		preparedStmts.put("signup", dbConnection.prepareStatement("SELECT marche_halibaba.signup_client(?, ?, ?, ?)"));
+		
+		preparedStmts.put("signin", dbConnection.prepareStatement("SELECT c_id, u_pswd " +
+				"FROM marche_halibaba.signin_users " +
+				"WHERE u_username = ?"));
+		
+		preparedStmts.put("estimateRequests", dbConnection.prepareStatement("SELECT er_id, er_description, er_pub_date, remaining_days " +
+				"FROM marche_halibaba.list_estimate_requests " +
+				"WHERE er_pub_date + INTERVAL '15' day >= NOW() AND " +
+				"er_chosen_estimate IS NULL AND " +
+				"c_id = ?"));
+		
+		preparedStmts.put("approvedEstimateRequests", dbConnection.prepareStatement("SELECT er_id, er_description, er_pub_date, remaining_days " +
+				"FROM marche_halibaba.list_estimate_requests " +
+				"WHERE er_chosen_estimate IS NOT NULL AND " +
+				"c_id = ?"));
+		
+		preparedStmts.put("submitEstimateRequests",
+				dbConnection.prepareStatement("SELECT marche_halibaba.submit_estimate_request(?,?,?,?,?,?,?,?,?,?,?)"));
+		
+		preparedStmts.put("estimates", dbConnection.prepareStatement("SELECT e_id, e_description, e_price, " +
+				"e_house_name " +
+				"FROM marche_halibaba.clients_list_estimates " +
+				"WHERE e_estimate_request_id = ?"));
+		
+		preparedStmts.put("estimate", dbConnection.prepareStatement("SELECT e_description, e_price, e_house_name, " +
+				"e_option_id, e_option_description, e_option_price " +
+				"FROM marche_halibaba.estimate_details " +
+				"WHERE e_id = ?"));
+		
+		preparedStmts.put("approveEstimateRequests", dbConnection.prepareStatement("SELECT marche_halibaba.approve_estimate(?, ?, ?)"));
 
-			preparedStmts.put("statistics", dbConnection.prepareStatement("SELECT h.name, h.turnover, h.acceptance_rate, " + 
-					"h.caught_cheating_nbr, h.caught_cheater_nbr " +
-					"FROM marche_halibaba.houses h "));
-		} catch (SQLException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+		preparedStmts.put("statistics", dbConnection.prepareStatement("SELECT h.name, h.turnover, h.acceptance_rate, " + 
+				"h.caught_cheating_nbr, h.caught_cheater_nbr " +
+				"FROM marche_halibaba.houses h "));
 
 	}
 	
-	private int signin() {
+	private boolean signin() throws SQLException {
 		System.out.println("\nSe connecter");
 		System.out.println("************************************************\n");
 		
@@ -140,33 +124,35 @@ public class ClientsApp {
 			try {
 				PreparedStatement ps = preparedStmts.get("signin");
 				ps.setString(1, username);
-				ResultSet result = ps.executeQuery();
+				ResultSet rs = ps.executeQuery();
 				
-				if(result.next() && 
-						result.getInt(1) > 0 &&
-						PasswordHash.validatePassword(pswd, result.getString(2))) {
-					return result.getInt(1);
+				if(rs.next() && 
+						rs.getInt(1) > 0 &&
+						PasswordHash.validatePassword(pswd, rs.getString(2))) {
+					clientId = rs.getInt(1);
+					rs.close();
+					isUsing = false;
+				} else {
+					System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est errone.");
+					System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
+					
+					if(!Utils.readOorN()) {
+						isUsing = false;
+					}
 				}
 				
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			} catch (InvalidKeySpecException e) {
 				e.printStackTrace();
-			} catch (SQLException e) {}
-			
-			System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est errone.");
-			System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
-			
-			if(!Utils.readOorN()) {
-				isUsing = false;
 			}
 
 		}
 		
-		return 0;
+		return clientId > 0;
 	}
 	
-	private int signup() {
+	private boolean signup() throws SQLException {
 		System.out.println("\nInscription");
 		System.out.println("************************************************\n");
 		
@@ -191,20 +177,23 @@ public class ClientsApp {
 				System.exit(1);
 			}
 			
+			PreparedStatement ps = preparedStmts.get("signup");
+			ps.setString(1, username);
+			ps.setString(2, pswd);
+			ps.setString(3, firstName);
+			ps.setString(4, lastName);
+			ResultSet rs = null;
+			
 			try {
-				PreparedStatement ps = preparedStmts.get("signup");
-				ps.setString(1, username);
-				ps.setString(2, pswd);
-				ps.setString(3, firstName);
-				ps.setString(4, lastName);
-				ResultSet rs = ps.executeQuery();
+				rs = ps.executeQuery();
 				rs.next();
 				
 				System.out.println("\nVotre compte a bien ete cree.");
 				System.out.println("Vous allez maintenant etre redirige vers la page d'accueil de l'application.");
 				Utils.blockProgress();
 				
-				return rs.getInt(1);
+				clientId = rs.getInt(1);
+				isUsing = false;
 			} catch (SQLException e) {
 				
 				if(e.getSQLState().equals("23505")) {
@@ -219,14 +208,20 @@ public class ClientsApp {
 					isUsing = false;
 				}
 	
+			} finally {
+				
+				if(rs != null) {
+					rs.close();
+				}
+				
 			}
 
 		}
 		
-		return 0;
+		return clientId > 0;
 	}
 	
-	private void menu() {
+	private void menu() throws SQLException {
 		System.out.println("\nMenu");
 		System.out.println("************************************************\n");
 		
@@ -246,6 +241,7 @@ public class ClientsApp {
 				displayEstimateRequests();
 				break;
 			case 2:
+				displayApprovedEstimateRequests();
 				break;
 			case 3:
 				submitEstimateRequest();
@@ -262,28 +258,25 @@ public class ClientsApp {
 		
 	}
 	
-	private void displayEstimateRequests() {
+	private void displayEstimateRequests() throws SQLException {
 		
 		boolean isUsing = true;
 		while(isUsing) {
 			HashMap<Integer, Integer> estimateRequests = new HashMap<Integer, Integer>(); 
 			String estimateRequestsStr = "";
 			
-			try {
-				PreparedStatement ps = preparedStmts.get("estimateRequests");
-				ps.setInt(1, clientId);
-				ResultSet rs = ps.executeQuery();
-				
-				int i = 1;
-				while(rs.next()) {
-					estimateRequests.put(i, rs.getInt(1));
-					estimateRequestsStr += i + ". " + rs.getString(2) + " - Poste le " + rs.getDate(3) + "\n";
-					i++;
-				}
-				
-			} catch (SQLException e) {
-				e.printStackTrace();
+			PreparedStatement ps = preparedStmts.get("estimateRequests");
+			ps.setInt(1, clientId);
+			ResultSet rs = ps.executeQuery();
+			
+			int i = 1;
+			while(rs.next()) {
+				estimateRequests.put(i, rs.getInt(1));
+				estimateRequestsStr += i + ". " + rs.getString(2) + " - Poste le " + rs.getDate(3) + "\n"; // TODO AFFICHER LE TEMPS RESTANT
+				i++;
 			}
+			
+			rs.close();
 			
 			if(estimateRequests.size() > 0) {
 				System.out.println(estimateRequestsStr);
@@ -297,7 +290,7 @@ public class ClientsApp {
 					System.out.println(estimateRequestsStr);
 					System.out.println("Pour quelle demande voulez-vous voir les devis soumis?");
 					int userChoice = Utils.readAnIntegerBetween(1, estimateRequests.size());
-					displayEstimateRequest(estimateRequests.get(userChoice));
+					displayEstimates(estimateRequests.get(userChoice));
 				} else {
 					isUsing = false;
 				}
@@ -309,90 +302,196 @@ public class ClientsApp {
 			}
 			
 		}
-
-					
+			
 	}
 	
-	private void displayEstimateRequest(int id) {
-		HashMap<Integer, Integer> estimates = new HashMap<Integer, Integer>();
-		String estimatesStr = "";
+	private void displayApprovedEstimateRequests() throws SQLException {
+		
+		HashMap<Integer, Integer> approvedEstimateRequests = new HashMap<Integer, Integer>(); 
+		String estimateRequestsStr = "";
 			
-		try {
-			PreparedStatement ps = preparedStmts.get("estimateRequest");
-			ps.setInt(1, id);
-			ResultSet rs = ps.executeQuery();
-			
-			int i = 1;
-			while(rs.next()) {
-				estimates.put(i, rs.getInt(1));
-				estimatesStr += i + ". " + rs.getString(2) + " - Prix: " + rs.getDate(3) + "€\n";
-				i++;
-			}
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
+		PreparedStatement ps = preparedStmts.get("approvedEstimateRequests");
+		ps.setInt(1, clientId);
+		ResultSet rs = ps.executeQuery();
+		
+		int i = 1;
+		while(rs.next()) {
+			approvedEstimateRequests.put(i, rs.getInt(1));
+			estimateRequestsStr += i + ". " + rs.getString(2) + " - Poste le " + rs.getDate(3) + "\n";
+			i++;
 		}
-		
-		System.out.println(estimatesStr);
-		
-		if(estimates.size() > 0) {
-			System.out.println("Que voulez-vous faire ?");
-			System.out.println("1. Accepter un devis");
-			System.out.println("2. Retour");
 			
-			if(Utils.readAnIntegerBetween(1, 2) == 1) {
-				System.out.println(estimatesStr);
-				System.out.println("Quel devis voulez-vous accepter ?");
-				int userChoice = Utils.readAnIntegerBetween(1, estimates.size());
-				approveEstimate(estimates.get(userChoice));	
-			}
-			
+		rs.close();
+		
+		if(approvedEstimateRequests.size() > 0) {
+			System.out.println(estimateRequestsStr);
+			Utils.blockProgress();
 		} else {
-			System.out.println("Il n'y a aucun devis soumis pour cette demande.\n");
+			System.out.println("Il n'y a aucune demande de devis acceptées.");
 			Utils.blockProgress();
 		}
-		
+			
 	}
 	
-	private void approveEstimate(int id) {
-		System.out.println("Etes-vous sur de vouloir accepter ce devis ? Oui (O) - Non (N)");
+	private void displayEstimates(int id) throws SQLException {
+		System.out.println("\nListe des devis soumis : ");
+		System.out.println("************************************************");
+		HashMap<Integer, Integer> estimates = new HashMap<Integer, Integer>();
+		String estimatesStr = "";
 		
-		if(Utils.readOorN()) {
-
-			try {
-				PreparedStatement ps = preparedStmts.get("approveEstimateRequests");
-				ps.setInt(1, id);
-				ResultSet rs = ps.executeQuery();
-				rs.next();
-				System.out.println("Le devis a bien été accepte");
-			} catch (SQLException e) {
-				System.out.println("Vous ne pouvez pas accepter ce devis.");
+		PreparedStatement ps = preparedStmts.get("estimates");
+		ps.setInt(1, id);
+		ResultSet rs = ps.executeQuery();
+		
+		int i = 1;
+		while(rs.next()) {
+			estimates.put(i, rs.getInt(1));
+			estimatesStr += i + ". " + rs.getString(2) + " - Prix: " + rs.getDouble(3) + "€ - Maison: " + rs.getString(4) + "\n";
+			i++;
+		}
+		
+		rs.close();
+			
+		boolean isUsing = true;
+		while(isUsing) {
+			System.out.println();
+			System.out.println(estimatesStr);
+			
+			if(estimates.size() > 0) {
+				System.out.println("Que voulez-vous faire ?");
+				System.out.println("1. Afficher les détails d'un devis");
+				System.out.println("2. Retour");
+				
+				if(Utils.readAnIntegerBetween(1, 2) == 1) {
+					System.out.println(estimatesStr);
+					System.out.println("Quel devis voulez-vous consulter ?");
+					int userChoice = Utils.readAnIntegerBetween(1, estimates.size());
+					isUsing = !displayEstimate(estimates.get(userChoice));	
+				} else {
+					isUsing = false;
+				}
+				
+			} else {
+				System.out.println("Il n'y a aucun devis soumis pour cette demande.\n");
+				Utils.blockProgress();
+				isUsing = false;
 			}
 			
 		}
 		
 	}
 	
-	private void submitEstimateRequest() {
-		System.out.println("Soumettre une demande de devis");
-		System.out.println("------------------------------");
-		System.out.println("Description:");
-		String description = Utils.scanner.nextLine();
-		System.out.println("Date souhaitee de fin des travaux (jj/mm/aaaa):");
-		Date deadline = Utils.readDate();
+	private boolean displayEstimate(int estimateId) throws SQLException {
+		String optionsStr = "";
+		Map<Integer, Integer> options = new HashMap<Integer, Integer>();
 		
-		Map<String, String> constructionAddress = enterAddress();
+		PreparedStatement ps = preparedStmts.get("estimate");
+		ps.setInt(1, estimateId);
+		ResultSet rs = ps.executeQuery();
 		
-		System.out.println("L'adresse de facturation est-elle differente de l'adresse des travaux ? O (oui) - N (non)");
-		
-		Map<String, String> invoicingAddress = null;
-		
-		if(Utils.readOorN()) {
-			invoicingAddress = enterAddress();
+		if(rs.next()) {
+			System.out.println("\nDevis : " + rs.getString(1));
+			System.out.println("************************************************");
+			System.out.println("Prix : " + rs.getDouble(2) + " euros");
+			System.out.println("Maison : " + rs.getString(3));
+						
+			int i = 1;
+			do {
+				
+				if(rs.getInt(4) != 0) {
+					optionsStr += i + " " + rs.getString(5) + " - prix : " + rs.getDouble(6) + " euros\n";
+					options.put(i, rs.getInt(4));
+					i++;
+				}
+				
+			} while(rs.next());
+			
+			if(options.size() > 0) {
+				System.out.println("\nListes des options : ");
+				System.out.println(optionsStr);
+			}
+
 		}
 		
-		try {
-			PreparedStatement ps = preparedStmts.get("estimate_requests");
+		rs.close();
+		
+		System.out.println("Que voulez-vous faire ?");
+		System.out.println("1. Accepter ce devis");
+		System.out.println("2. Retour");
+		
+		if(Utils.readAnIntegerBetween(1, 2) == 1) {
+			return approveEstimate(estimateId, optionsStr, options);
+		}
+		
+		return false;
+	}
+	
+	private boolean approveEstimate(int estimateId, String optionsStr, Map<Integer, Integer> options) throws SQLException {
+		System.out.println("\nEtes-vous sur de vouloir accepter ce devis ? Oui (O) - Non (N)");
+		
+		if(Utils.readOorN()) {
+			boolean status = false;
+			Array chosenOptions = null;
+			System.out.println("Voulez-vous choisir des options ?");
+			
+			if(Utils.readOorN()) {
+				int[] integers = Utils.readIntegersBetween(1, options.size());
+				Object[] userChoices = new Object[integers.length];
+				
+				for(int i = 0; i < integers.length; i++) {
+					userChoices[i] = (Object) options.get(integers[i]);
+				}
+				
+				chosenOptions = dbConnection.createArrayOf("integer", userChoices);
+			}
+			
+			PreparedStatement ps = preparedStmts.get("approveEstimateRequests");
+			ps.setInt(1, estimateId);
+			ps.setArray(2, chosenOptions);
+			ps.setInt(3, clientId);
+			ResultSet rs = null;
+			
+			try {
+				rs = ps.executeQuery();
+				rs.next();
+				System.out.println("Le devis a bien ete accepte!\n");
+				status = true;
+			} catch (SQLException e) {
+				System.out.println("Ce devis ne peut-etre accepte.\n");
+			} finally {
+				
+				if(rs != null) {
+					rs.close();
+				}
+				
+			}
+			
+			return status;
+		}
+		
+		return false;
+	}
+	
+	private void submitEstimateRequest() throws SQLException {
+		System.out.println("\nSoumettre une demande de devis");
+		System.out.println("************************************************\n");
+		
+		boolean isUsing = true;
+		while(isUsing) {
+			System.out.print("Description : ");
+			String description = Utils.scanner.nextLine();
+			System.out.print("Date souhaitee de fin des travaux (jj/mm/aaaa) : ");
+			Date deadline = Utils.readDate();
+			Map<String, String> constructionAddress = enterAddress();
+			
+			System.out.println("L'adresse de facturation est-elle differente de l'adresse des travaux ? O (oui) - N (non)");
+			Map<String, String> invoicingAddress = null;
+			
+			if(Utils.readOorN()) {
+				invoicingAddress = enterAddress();
+			}
+			
+			PreparedStatement ps = preparedStmts.get("submitEstimateRequests");
 			ps.setString(1, description);
 			ps.setDate(2, new java.sql.Date(deadline.getTime()));
 			ps.setInt(3, clientId);
@@ -413,12 +512,27 @@ public class ClientsApp {
 				ps.setString(11, invoicingAddress.get("city"));
 			}
 			
-			ResultSet result = ps.executeQuery();
-		} catch (SQLException e) {
-			e.printStackTrace();
+			ResultSet rs = null;
+			
+			try {	
+				rs = ps.executeQuery();		
+				System.out.println("\nFelicitations! Votre demande de devis a bien ete publiee.");
+				Utils.blockProgress();
+				isUsing = false;
+			} catch (SQLException e) {
+				System.out.println("Les données entrees sont erronnées. Veuillez recommencer.\n");
+			} finally {
+				
+				if(rs != null) {
+					rs.close();
+				}
+				
+			}
+			
 		}
 
 	}
+	
 	
 	private void displayStatistics() {
 		System.out.println("Statistiques:");
@@ -443,20 +557,19 @@ public class ClientsApp {
 	private Map<String, String> enterAddress() {
 		Map<String, String> address = new HashMap<String, String>();
 		
-		System.out.println("Nom de la rue: ");
+		System.out.print("Nom de la rue: ");
 		address.put("streetName", Utils.scanner.nextLine());
 		
-		System.out.println("Numero: ");
+		System.out.print("Numero: ");
 		address.put("streetNbr", Utils.scanner.nextLine());
 		
-		System.out.println("Code postal: ");
+		System.out.print("Code postal: ");
 		address.put("zipCode", Utils.scanner.nextLine());
-		
-		System.out.println("Ville: ");
+	
+		System.out.print("Ville: ");
 		address.put("city", Utils.scanner.nextLine());
 		
 		return address;
 	}
-
 	
 }

@@ -20,7 +20,40 @@ public class Utils {
         	e.printStackTrace();
         }
 
-	}	
+	}
+	
+	public static int[] readIntegersBetween(int number1, int number2) {
+		int[] integers = null;
+		
+		boolean isLegal = false;
+		while(!isLegal) {
+			String str = scanner.nextLine();
+			str = str.replaceAll("[^-?0-9]+", "-");
+		    String[] strs = str.split("-");
+		    integers = new int[strs.length];
+		    
+		    if(strs.length == 0) {
+		    	System.out.println("Veuillez entrer des nombres compris entre " + number1 + " et " + number2 + ".");
+		    } else {
+		    	isLegal = true;
+		    }
+		    
+		    for(int i=0; i<strs.length; i++) {
+		    	int j = Integer.parseInt(strs[i]);
+		    	
+		    	if(j < number1 || j > number2) {
+		    		System.out.println("Les nombres doivent etre compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
+		    		isLegal = false;
+		    		break;
+		    	}
+		    	
+		    	integers[i] = j;
+		    }
+		    
+		}
+
+	    return integers;
+	}
 
 	public static int readAnIntegerBetween(int number1, int number2){
 		int number = 0;
