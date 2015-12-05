@@ -436,7 +436,7 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
   GROUP BY h.house_id, h.name;
 
 
-CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[], INTEGER[])
+CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[])
   RETURNS INTEGER AS $$
 
 DECLARE
@@ -447,101 +447,24 @@ DECLARE
   arg_estimate_request_id ALIAS FOR $5;
   arg_house_id ALIAS FOR $6;
   arg_chosen_options ALIAS FOR $7;
-  arg_price_options ALIAS FOR $8;
   new_estimate_request_id INTEGER;
-  caught_cheating_house_id INTEGER;
   nbr_chosen_options INTEGER := array_upper(arg_chosen_options::int[], 1);
-  nbr_price_options INTEGER := array_upper(arg_price_options::int[], 1);
-  house_times_record RECORD;
+  option_price NUMERIC(12,2);
 BEGIN
-
-  SELECT h.penalty_expiration AS penalty_expiration,
-    h.secret_limit_expiration AS secret_limit_expiration,
-    h.hiding_limit_expiration AS hiding_limit_expiration
-  INTO house_times_record
-  FROM marche_halibaba.houses h
-  WHERE h.house_id= arg_house_id;
-
-  IF house_times_record.penalty_expiration IS NOT NULL
-  THEN
-      RAISE EXCEPTION 'Vous êtes interdit de devis pour encore % heures.', age( house_times_record.penalty_expiration, NOW());
-  END IF;
-
-  IF EXISTS( --If the estimate_request is expired, we raise a exception;
-  SELECT *
-  FROM marche_halibaba.estimate_requests er
-  WHERE er.estimate_request_id= arg_estimate_request_id
-    AND er.deadline< NOW()
-  )THEN
-    RAISE EXCEPTION 'Cette demande de devis est expirée.';
-  END IF;
-
-  SELECT h.house_id
-    INTO caught_cheating_house_id
-  FROM marche_halibaba.estimates e, marche_halibaba.houses h
-  WHERE e.estimate_request_id= arg_estimate_request_id
-    AND e.house_id= h.house_id
-    AND e.is_hiding= TRUE AND e.is_cancelled= FALSE;
-
-  IF arg_is_hiding= TRUE
-  THEN
-    IF house_times_record.hiding_limit_expiration > NOW() --On vérifie que l'on peut soumettre un devis hiding actuellement
-    THEN
-      RAISE EXCEPTION 'Vous ne pouvez pas poster de devis masquant pour encore %.',age( house_times_record.hiding_limit_expiration, NOW()) ;
-
-    ELSEIF caught_cheating_house_id IS NOT NULL --S'il y a déjà un devis masquant pour cette estimate_request
-    THEN
-      UPDATE marche_halibaba.houses
-      SET penalty_expiration = NOW() + INTERVAL '1' day,
-        caught_cheating_nbr = caught_cheating_nbr+1
-      WHERE  house_id = caught_cheating_house_id;
-
-      UPDATE marche_halibaba.houses
-      SET caught_cheater_nbr = caught_cheater_nbr+1
-      WHERE house_id= arg_house_id;
-
-      UPDATE marche_halibaba.estimates
-      SET is_cancelled= TRUE
-      WHERE house_id= caught_cheating_house_id
-        AND estimate_request_id= arg_estimate_request_id
-        AND is_hiding= TRUE;
-
-      UPDATE marche_halibaba.estimates
-      SET is_cancelled= TRUE
-      WHERE house_id= caught_cheating_house_id
-        AND submission_date >= NOW() - INTERVAL '1' day;
-
-      arg_is_hiding:=FALSE;
-      arg_is_secret:=FALSE; --Justifier dans le rapport que si on ne set pas secret à false, on ne pourrait pas poster, juste après celui-ci, un devis secret & hiding  mais seulement hiding. Et qu'ainsi on a réellement un devis normal soumis.
-    ELSE
-      UPDATE marche_halibaba.houses
-      SET hiding_limit_expiration= NOW()+ INTERVAL '7' day
-      WHERE house_id= arg_house_id;
-    END IF;
-  END IF;
-
-  IF arg_is_secret= TRUE --Si le devis est secret:
-  THEN
-    IF house_times_record.secret_limit_expiration> NOW() --On vérifie que l'on peut soumettre un devis secret actuellement
-    THEN
-      RAISE EXCEPTION 'Vous ne pouvez pas poster de devis secret pour encore % heures.',age( house_times_record.secret_limit_expiration, NOW()) ;
-    ELSE
-      UPDATE marche_halibaba.houses
-      SET secret_limit_expiration= NOW()+ INTERVAL '1' day
-      WHERE house_id= arg_house_id;
-    END IF;
-  END IF;
-
   INSERT INTO marche_halibaba.estimates(description, price, is_secret, is_hiding, submission_date, estimate_request_id, house_id)
   VALUES (arg_description, arg_price, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
     RETURNING estimate_id INTO new_estimate_request_id;
 
-  IF nbr_price_options IS NOT NULL AND nbr_chosen_options IS NOT NULL AND nbr_chosen_options= nbr_price_options
+  IF nbr_chosen_options IS NOT NULL -- If there are options selected
   THEN
     FOR i IN 1 .. nbr_chosen_options
     LOOP
+      SELECT o.price INTO option_price
+      FROM marche_halibaba.options o
+      WHERE o.option_id= arg_chosen_options[i];
+
       INSERT INTO marche_halibaba.estimate_options
-      VALUES (arg_price_options[i], FALSE, new_estimate_request_id , arg_chosen_options[i]);
+      VALUES (option_price, FALSE, new_estimate_request_id , arg_chosen_options[i]);
     END LOOP;
   END IF;
 
@@ -549,7 +472,6 @@ BEGIN
 
 END;
 $$ LANGUAGE 'plpgsql';
-
 
 DROP VIEW IF EXISTS marche_halibaba.valid_estimates_nbr;
 CREATE VIEW marche_halibaba.valid_estimates_nbr AS
@@ -566,34 +488,152 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
   GROUP BY h.house_id, h.name;
 
 
+CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_insert()
+  RETURNS TRIGGER AS $$
+
+DECLARE 
+  new_estimate_request_id INTEGER;
+  caught_cheating_house_id INTEGER;
+  house_times_record RECORD;
+
+BEGIN
+  
+  SELECT h.penalty_expiration AS penalty_expiration, 
+    h.secret_limit_expiration AS secret_limit_expiration,
+    h.hiding_limit_expiration AS hiding_limit_expiration
+  INTO house_times_record
+  FROM marche_halibaba.houses h
+  WHERE h.house_id= NEW.house_id;
+
+  SELECT h.house_id 
+    INTO caught_cheating_house_id
+  FROM marche_halibaba.estimates e, marche_halibaba.houses h
+  WHERE e.estimate_request_id= NEW.estimate_request_id
+    AND e.house_id= h.house_id
+    AND e.is_hiding= TRUE AND e.is_cancelled= FALSE;
+
+  IF house_times_record.penalty_expiration > NOW() 
+  THEN 
+    RAISE EXCEPTION 'Vous êtes interdit de devis pour encore % heures.', age( house_times_record.penalty_expiration, NOW());
+  END IF;
+
+  IF EXISTS( --If the estimate_request is expired, we raise a exception;
+  SELECT *
+  FROM marche_halibaba.estimate_requests er
+  WHERE er.estimate_request_id= NEW.house_id  
+    AND er.deadline< NOW()
+  )THEN 
+    RAISE EXCEPTION 'Cette demande de devis est expirée.';
+  END IF;
+  
+  IF NEW.is_hiding= TRUE
+  THEN
+    IF house_times_record.hiding_limit_expiration > NOW() --On vérifie que l'on peut soumettre un devis hiding actuellement
+    THEN 
+      RAISE EXCEPTION 'Vous ne pouvez pas poster de devis masquant pour encore %.',age( house_times_record.hiding_limit_expiration, NOW()) ;
+    ELSEIF caught_cheating_house_id IS NOT NULL --S'il y a déjà un devis masquant pour cette estimate_request
+    THEN 
+      UPDATE marche_halibaba.houses
+      SET penalty_expiration = NOW() + INTERVAL '1' day,
+        caught_cheating_nbr = caught_cheating_nbr+1
+      WHERE  house_id = caught_cheating_house_id;
+
+      UPDATE marche_halibaba.houses
+      SET caught_cheater_nbr = caught_cheater_nbr+1
+      WHERE house_id= NEW.house_id;
+
+      UPDATE marche_halibaba.estimates
+      SET is_cancelled= TRUE
+      WHERE house_id= caught_cheating_house_id
+        AND estimate_request_id= NEW.estimate_request_id
+        AND is_hiding= TRUE;
+
+      UPDATE marche_halibaba.estimates 
+      SET is_cancelled= TRUE
+      WHERE house_id= caught_cheating_house_id
+        AND submission_date >= NOW() - INTERVAL '1' day;
+
+      NEW.is_hiding:=FALSE;
+      NEW.is_secret:=FALSE; --Justifier dans le rapport que si on ne set pas secret à false, on ne pourrait pas poster, juste après celui-ci, un devis secret & hiding  mais seulement hiding. Et qu'ainsi on a réellement un devis normal soumis.
+
+    ELSE
+      UPDATE marche_halibaba.houses 
+      SET hiding_limit_expiration= NOW()+ INTERVAL '7' day 
+      WHERE house_id= NEW.house_id;
+    END IF;
+  END IF;
+
+  IF NEW.is_secret= TRUE
+  THEN
+    IF house_times_record.secret_limit_expiration > NOW() 
+    THEN
+      RAISE EXCEPTION 'Vous ne pouvez pas poster de devis secret pour encore % heures.',age( house_times_record.secret_limit_expiration, NOW()) ;
+    ELSE
+      UPDATE marche_halibaba.houses 
+      SET secret_limit_expiration= NOW()+ INTERVAL '1' day 
+      WHERE house_id= NEW.house_id;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+CREATE TRIGGER trigger_estimate_insert
+BEFORE INSERT ON marche_halibaba.estimates
+FOR EACH ROW
+EXECUTE PROCEDURE marche_halibaba.trigger_estimate_insert();
+
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_requests_update()
   RETURNS TRIGGER AS $$
 
 DECLARE
-  approved_estimate_house_id INTEGER;
-  approved_estimate_price NUMERIC(12,2);
+  estimate_details RECORD;
   approved_estimates_nbr NUMERIC(16,2);
   estimates_nbr NUMERIC(16,2);
 BEGIN
-  SELECT e.house_id, e.price
-  INTO approved_estimate_house_id, approved_estimate_price
+  SELECT e.estimate_request_id as "estimate_request_id",
+    e.is_cancelled as "is_cancelled", (er.pub_date + INTERVAL '15' day) as "expiration_date",
+    e.price as "price",
+    e.house_id as "house_id"
+  INTO estimate_details
   FROM marche_halibaba.estimates e
-  WHERE e.estimate_id = NEW.chosen_estimate;
+  WHERE e.estimate_request_id = OLD.estimate_request_id AND -- Sert à vérifier que le devis est bien lié à cette demande de devis
+    e.estimate_id = NEW.chosen_estimate;
 
+  IF estimate_details IS NULL THEN
+    RAISE EXCEPTION 'Ce devis n appartient pas à cette demande de devis';
+  END IF;
+
+  -- An exception is raised if a estimate has already been approved for this estimate request
+  IF OLD.chosen_estimate IS NOT NULL THEN
+    RAISE EXCEPTION 'Un devis a déjà été approuvé pour cette demande.';
+  END IF;
+
+  -- An exception is raised because the estimate has been cancelled
+  IF estimate_details.is_cancelled THEN
+    RAISE EXCEPTION 'Ce devis n est pas valide.';
+  END IF;
+
+  -- An exception is raised because the estimate request has expired
+  IF estimate_details.expiration_date < NOW() THEN
+    RAISE EXCEPTION 'Cette demande de devis est expirée.';
+  END IF;
+
+  -- Updates house statistics
   SELECT count(estimate_id)
   INTO approved_estimates_nbr
   FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
   WHERE e.estimate_id = er.chosen_estimate AND
-    e.house_id = approved_estimate_house_id;
+    e.house_id = estimate_details.house_id;
 
   SELECT count(estimate_id)
   INTO estimates_nbr
   FROM marche_halibaba.estimates e
-  WHERE e.house_id = approved_estimate_house_id;
+  WHERE e.house_id = estimate_details.house_id;
 
-  -- Updates house statistics
   UPDATE marche_halibaba.houses
-  SET turnover = turnover + approved_estimate_price,
+  SET turnover = turnover + estimate_details.price,
     acceptance_rate = approved_estimates_nbr/estimates_nbr
   WHERE house_id = approved_estimate_house_id;
 
@@ -602,7 +642,7 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trigger_estimate_requests_update
-AFTER UPDATE on marche_halibaba.estimate_requests
+BEFORE UPDATE on marche_halibaba.estimate_requests
 FOR EACH ROW
 WHEN (OLD.chosen_estimate IS NULL AND NEW.chosen_estimate IS NOT NULL)
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_requests_update();

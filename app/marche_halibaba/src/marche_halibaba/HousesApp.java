@@ -24,7 +24,7 @@ public class HousesApp {
 			System.out.println("* Bienvenue sur le Marche d'Halibaba - Maisons *");
 			System.out.println("************************************************");
 			System.out.println("1 - Se connecter");
-			System.out.println("2 - Créer un compte");
+			System.out.println("2 - Creer un compte");
 			System.out.println("3 - Quitter");
 			
 			System.out.println("\nQuel est votre choix? (1-3)");	
@@ -131,8 +131,8 @@ public class HousesApp {
 				e.printStackTrace();
 			} catch (SQLException e) {}
 			
-			System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est erroné.");
-			System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
+			System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est errone.");
+			System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
 			
 			if(!Utils.readOorN()) {
 				isUsing = false;
@@ -174,20 +174,20 @@ public class HousesApp {
 				ResultSet rs = ps.executeQuery();
 				rs.next();
 				
-				System.out.println("\nVotre compte a bien été créé.");
-				System.out.println("Vous allez maintenant être redirigé vers la page d'accueil de l'application.");
+				System.out.println("\nVotre compte a bien ete cree.");
+				System.out.println("Vous allez maintenant etre redirige vers la page d'accueil de l'application.");
 				Utils.blockProgress();
 				
 				return rs.getInt(1);
 			} catch (SQLException e) {
 				
 				if(e.getSQLState().equals("23505")) {
-					System.out.println("\nCe nom d'utilisateur est déjà utilisé.");
+					System.out.println("\nCe nom d'utilisateur est deja utilise.");
 				} else {
-					System.out.println("\nLes données saisies sont incorrectes.");
+					System.out.println("\nLes donnees saisies sont incorrectes.");
 				}
 				
-				System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
+				System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
 				
 				if(!Utils.readOorN()) {
 					isUsing = false;
@@ -210,9 +210,9 @@ public class HousesApp {
 			System.out.println("2. option 2");
 			System.out.println("3. option 3");
 			System.out.println("4. option 4");
-			System.out.println("5. Se déconnecter");
+			System.out.println("5. Se deconnecter");
 			
-			System.out.println("\nQue désirez-vous faire ? (1 - 5)");
+			System.out.println("\nQue desirez-vous faire ? (1 - 5)");
 			int choice = Utils.readAnIntegerBetween(1, 5);
 			
 			switch(choice) {
