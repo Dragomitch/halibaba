@@ -16,43 +16,8 @@ public class Utils {
         
 		try {
             scanner.nextLine();
-        } catch(Exception e) {
-        	e.printStackTrace();
-        }
+        } catch(Exception e) {}
 
-	}
-	
-	public static int[] readIntegersBetween(int number1, int number2) {
-		int[] integers = null;
-		
-		boolean isLegal = false;
-		while(!isLegal) {
-			String str = scanner.nextLine();
-			str = str.replaceAll("[^-?0-9]+", "-");
-		    String[] strs = str.split("-");
-		    integers = new int[strs.length];
-		    
-		    if(strs.length == 0) {
-		    	System.out.println("Veuillez entrer des nombres compris entre " + number1 + " et " + number2 + ".");
-		    } else {
-		    	isLegal = true;
-		    }
-		    
-		    for(int i=0; i<strs.length; i++) {
-		    	int j = Integer.parseInt(strs[i]);
-		    	
-		    	if(j < number1 || j > number2) {
-		    		System.out.println("Les nombres doivent etre compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
-		    		isLegal = false;
-		    		break;
-		    	}
-		    	
-		    	integers[i] = j;
-		    }
-		    
-		}
-
-	    return integers;
 	}
 
 	public static int readAnIntegerBetween(int number1, int number2){
@@ -101,6 +66,50 @@ public class Utils {
 		}
 				
 		return date;
+	}
+	
+	public static int[] readIntegersBetween(int number1, int number2) {
+		int[] integers = null;
+		
+		boolean isLegal = false;
+		while(!isLegal) {
+			String str = scanner.nextLine();
+			str = str.replaceAll("[^-?0-9]+", "-");
+		    String[] strs = str.split("-");
+		    integers = new int[strs.length];
+		    
+		    if(strs.length == 0) {
+		    	System.out.println("Veuillez entrer des nombres compris entre " + number1 + " et " + number2 + ".");
+		    } else {
+		    	isLegal = true;
+		    }
+		    
+		    for(int i=0; i<strs.length; i++) {
+		    	int j = Integer.parseInt(strs[i]);
+		    	
+		    	if(j < number1 || j > number2) {
+		    		System.out.println("Les nombres doivent etre compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
+		    		isLegal = false;
+		    		break;
+		    	}
+		    	
+		    	integers[i] = j;
+		    }
+		    
+		}
+
+	    return integers;
+	}
+	
+	public static String SQLIntervalToString(String interval) {
+		String str = "";
+		
+		String days = interval.substring(0, 2).replaceAll(" ", "");
+		String hours = interval.replaceAll("[0-9]{1,2} days ", "").replaceAll("[0-9] day ", "").substring(0, 2).replaceAll(":", "");
+		
+		str = days + " jour(s) " + hours + " heure(s) restant(s)";
+	
+		return str;
 	}
 	
 	public static boolean readOorN(){

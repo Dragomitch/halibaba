@@ -149,7 +149,7 @@ CREATE VIEW marche_halibaba.list_estimate_requests AS
     c.client_id AS "c_id",
     c.last_name AS "c_last_name",
     c.first_name AS "c_first_name",
-    (er.pub_date + INTERVAL '15' day) - NOW() AS "remaining_days"
+    AGE(er.pub_date + INTERVAL '15' day, NOW()) AS "remaining_days"
   FROM marche_halibaba.clients c, marche_halibaba.addresses a, marche_halibaba.estimate_requests er
     LEFT OUTER JOIN marche_halibaba.addresses a2 ON er.invoicing_address = a2.address_id
   WHERE a.address_id = er.construction_address
@@ -211,7 +211,8 @@ CREATE VIEW marche_halibaba.clients_list_estimates AS
         SELECT *
         FROM marche_halibaba.estimates e2
         WHERE e2.estimate_request_id = e.estimate_request_id AND
-          e2.is_hiding = TRUE
+          e2.is_hiding = TRUE AND
+          e2.is_cancelled = FALSE
       )
     )
     UNION
@@ -236,92 +237,6 @@ CREATE VIEW marche_halibaba.clients_list_estimates AS
         e.house_id = h.house_id
     )) view
   ORDER BY view.submission_date DESC;
-
-/** DEPRECATED LOOSER MODE
--- Custom type
---DROP TYPE IF EXISTS marche_halibaba.estimate;
-CREATE TYPE marche_halibaba.estimate
-  AS (
-    estimate_id INTEGER,
-    description TEXT,
-    price NUMERIC(12,2),
-    options_nbr INTEGER,
-    submission_date TIMESTAMP,
-    house_id INTEGER
-  );
-
--- Procedure
-CREATE OR REPLACE FUNCTION marche_halibaba.list_estimates_for(INTEGER)
-  RETURNS SETOF marche_halibaba.estimate AS $$
-
-DECLARE
-  arg_estimate_request_id ALIAS FOR $1;
-  cur_estimate marche_halibaba.estimate;
-  out marche_halibaba.estimate;
-BEGIN
-
-  -- If an estimate has already been approved for this estimate request,
-  -- that estimate is returned
-  IF (
-    SELECT chosen_estimate
-    FROM marche_halibaba.estimate_requests
-    WHERE estimate_request_id = arg_estimate_request_id
-  ) IS NOT NULL THEN
-    SELECT e.estimate_id, e.description, e.price,
-        count(DISTINCT eo.option_id), e.submission_date, e.house_id
-      INTO out
-      FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
-      LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
-        eo.estimate_id = e.estimate_id
-      WHERE er.chosen_estimate = e.estimate_id AND
-        er.estimate_request_id = arg_estimate_request_id
-      GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id;
-    RETURN NEXT out;
-    RETURN;
-  END IF;
-
-  -- If an hiding estimate has been submitted for this estimate request,
-  -- that estimate is returned
-  IF EXISTS (
-    SELECT *
-    FROM marche_halibaba.estimates e
-    WHERE e.is_hiding = TRUE AND
-      e.is_cancelled = FALSE AND
-      e.estimate_request_id = arg_estimate_request_id
-  ) THEN
-    SELECT e.estimate_id, e.description, e.price,
-      count(DISTINCT eo.option_id), e.submission_date, e.house_id
-    INTO out
-    FROM marche_halibaba.estimates e
-      LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
-        eo.estimate_id = e.estimate_id
-    WHERE e.is_hiding = TRUE AND
-      e.is_cancelled = FALSE AND
-      e.estimate_request_id = arg_estimate_request_id
-    GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id;
-    RETURN NEXT out;
-    RETURN;
-  END IF;
-
-  -- All estimates for this estimate request are returned
-  FOR cur_estimate IN (
-    SELECT e.estimate_id, e.description, e.price,
-      count(DISTINCT eo.option_id), e.submission_date, e.house_id
-    FROM marche_halibaba.estimates e
-      LEFT OUTER JOIN marche_halibaba.estimate_options eo ON
-        eo.estimate_id = e.estimate_id
-    WHERE e.is_cancelled = FALSE AND
-      e.estimate_request_id = arg_estimate_request_id
-    GROUP BY e.estimate_id, e.description, e.price, e.submission_date, e.house_id
-    ORDER BY e.submission_date DESC
-  ) LOOP
-    SELECT cur_estimate.* INTO out;
-    RETURN NEXT out;
-  END LOOP;
-  RETURN;
-
-END;
-$$ LANGUAGE 'plpgsql'; **/
 
 
 CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate_request(TEXT, DATE, INTEGER, VARCHAR(50), VARCHAR(8), VARCHAR(5), VARCHAR(35), VARCHAR(50), VARCHAR(8), VARCHAR(5), VARCHAR(35))
@@ -393,13 +308,15 @@ BEGIN
   SET chosen_estimate = arg_estimate_id
   WHERE estimate_request_id = er_id;
 
-  FOREACH option IN ARRAY arg_chosen_options
-  LOOP
-    UPDATE marche_halibaba.estimate_options
-    SET is_chosen = TRUE
-    WHERE option_id = option AND
-      estimate_id = arg_estimate_id;
-  END LOOP;
+  IF arg_chosen_options IS NOT NULL THEN
+    FOREACH option IN ARRAY arg_chosen_options
+    LOOP
+      UPDATE marche_halibaba.estimate_options
+      SET is_chosen = TRUE
+      WHERE option_id = option AND
+        estimate_id = arg_estimate_id;
+    END LOOP;
+  END IF;
 
   RETURN 0;
 END;
@@ -490,15 +407,17 @@ BEGIN
   VALUES (arg_description, arg_price, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
     RETURNING estimate_id INTO new_estimate_id;
 
-  FOREACH option IN ARRAY arg_chosen_options
-  LOOP
-    SELECT o.price INTO option_price
-    FROM marche_halibaba.options o
-    WHERE o.option_id = option;
+  IF arg_chosen_options IS NOT NULL THEN
+    FOREACH option IN ARRAY arg_chosen_options
+    LOOP
+      SELECT o.price INTO option_price
+      FROM marche_halibaba.options o
+      WHERE o.option_id = option;
 
-    INSERT INTO marche_halibaba.estimate_options(price, is_chosen, estimate_id, option_id)
-    VALUES (option_price, FALSE, new_estimate_id, option);
-  END LOOP;
+      INSERT INTO marche_halibaba.estimate_options(price, is_chosen, estimate_id, option_id)
+      VALUES (option_price, FALSE, new_estimate_id, option);
+    END LOOP;
+  END IF;
 
   RETURN new_estimate_id;
 END;
@@ -703,7 +622,7 @@ EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
 
 
 /* DEV ENVIRONMENT */
-
+/*
 DROP USER IF EXISTS app;
 
 CREATE USER app
@@ -723,7 +642,54 @@ TO app;
 
 GRANT ALL PRIVILEGES
 ON ALL FUNCTIONS IN SCHEMA marche_halibaba
-TO app;
+TO app;*/
+
+/* Clients app user */
+
+DROP USER IF EXISTS app_clients;
+
+CREATE USER app_clients
+ENCRYPTED PASSWORD '2S5jn12JndG68hT';
+
+GRANT USAGE
+ON SCHEMA marche_halibaba
+TO app_clients;
+
+GRANT SELECT
+ON marche_halibaba.clients_list_estimates,
+  marche_halibaba.estimate_details,
+  marche_halibaba.list_estimate_requests,
+  marche_halibaba.signin_users,
+  marche_halibaba.houses,
+  marche_halibaba.estimates,
+  marche_halibaba.options
+TO app_clients;
+
+GRANT SELECT, INSERT
+ON marche_halibaba.users,
+  marche_halibaba.clients,
+  marche_halibaba.estimate_requests,
+  marche_halibaba.addresses
+TO app_clients;
+
+GRANT SELECT, UPDATE, TRIGGER
+ON marche_halibaba.estimate_requests,
+  marche_halibaba.estimate_options,
+  marche_halibaba.houses
+TO app_clients;
+
+GRANT EXECUTE
+ON FUNCTION marche_halibaba.approve_estimate(INTEGER, INTEGER[], INTEGER),
+  marche_halibaba.signup_client(VARCHAR(35), VARCHAR(50), VARCHAR(35), VARCHAR(35)),
+  marche_halibaba.submit_estimate_request(TEXT, DATE, INTEGER, VARCHAR(50),
+    VARCHAR(8), VARCHAR(5), VARCHAR(35), VARCHAR(50), VARCHAR(8), VARCHAR(5), VARCHAR(35)),
+  marche_halibaba.trigger_estimate_requests_update(),
+  marche_halibaba.trigger_estimate_options_update()
+TO app_clients;
+
+GRANT ALL PRIVILEGES
+ON ALL SEQUENCES IN SCHEMA marche_halibaba
+TO app_clients;
 
 /* PROD ENVIRONMENT
 

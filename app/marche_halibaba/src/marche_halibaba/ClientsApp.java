@@ -19,7 +19,7 @@ public class ClientsApp extends App {
 	public static void main(String[] args) {
 						
 		try {
-			ClientsApp session = new ClientsApp("app", "2S5jn12JndG68hT");
+			ClientsApp session = new ClientsApp("app_clients", "2S5jn12JndG68hT");
 			
 			boolean isUsing = true;
 			while(isUsing) {
@@ -57,7 +57,7 @@ public class ClientsApp extends App {
 				
 			}
 			
-			System.out.println("Merci de votre visite. A bientot!");
+			System.out.println("\nMerci de votre visite. A bientot!");
 			session.dbConnection.close();
 			
 		} catch(SQLException e) {
@@ -78,7 +78,7 @@ public class ClientsApp extends App {
 				"FROM marche_halibaba.signin_users " +
 				"WHERE u_username = ?"));
 		
-		preparedStmts.put("estimateRequests", dbConnection.prepareStatement("SELECT er_id, er_description, er_pub_date, remaining_days " +
+		preparedStmts.put("estimateRequests", dbConnection.prepareStatement("SELECT er_id, er_description, remaining_days " +
 				"FROM marche_halibaba.list_estimate_requests " +
 				"WHERE er_pub_date + INTERVAL '15' day >= NOW() AND " +
 				"er_chosen_estimate IS NULL AND " +
@@ -196,6 +196,8 @@ public class ClientsApp extends App {
 				isUsing = false;
 			} catch (SQLException e) {
 				
+				e.printStackTrace();
+				
 				if(e.getSQLState().equals("23505")) {
 					System.out.println("\nCe nom d'utilisateur est déjà utilise.");
 				} else {
@@ -222,11 +224,12 @@ public class ClientsApp extends App {
 	}
 	
 	private void menu() throws SQLException {
-		System.out.println("\nMenu");
-		System.out.println("************************************************\n");
 		
 		boolean isUsing = true;
 		while(isUsing) {
+			System.out.println("\nMenu");
+			System.out.println("************************************************\n");
+			
 			System.out.println("1. Consulter mes demandes de devis en cours");
 			System.out.println("2. Consulter mes demandes de devis acceptees");
 			System.out.println("3. Soumettre une demande de devis");
@@ -262,6 +265,9 @@ public class ClientsApp extends App {
 		
 		boolean isUsing = true;
 		while(isUsing) {
+			System.out.println("\nListe des demandes de devis en cours : ");
+			System.out.println("************************************************\n");
+			
 			HashMap<Integer, Integer> estimateRequests = new HashMap<Integer, Integer>(); 
 			String estimateRequestsStr = "";
 			
@@ -272,7 +278,8 @@ public class ClientsApp extends App {
 			int i = 1;
 			while(rs.next()) {
 				estimateRequests.put(i, rs.getInt(1));
-				estimateRequestsStr += i + ". " + rs.getString(2) + " - Poste le " + rs.getDate(3) + "\n"; // TODO AFFICHER LE TEMPS RESTANT
+				estimateRequestsStr += i + ". " + rs.getString(2) + " - " +
+						Utils.SQLIntervalToString(rs.getString(3)) + "\n";
 				i++;
 			}
 			
@@ -280,14 +287,13 @@ public class ClientsApp extends App {
 			
 			if(estimateRequests.size() > 0) {
 				System.out.println(estimateRequestsStr);
-				Utils.blockProgress();
 				
 				System.out.println("Que voulez-vous faire ?");
 				System.out.println("1. Consulter les devis soumis pour une demande");
 				System.out.println("2. Retour");
 				
 				if(Utils.readAnIntegerBetween(1, 2) == 1) {
-					System.out.println(estimateRequestsStr);
+					System.out.println("\n" + estimateRequestsStr);
 					System.out.println("Pour quelle demande voulez-vous voir les devis soumis?");
 					int userChoice = Utils.readAnIntegerBetween(1, estimateRequests.size());
 					displayEstimates(estimateRequests.get(userChoice));
@@ -306,6 +312,8 @@ public class ClientsApp extends App {
 	}
 	
 	private void displayApprovedEstimateRequests() throws SQLException {
+		System.out.println("\nListe des demandes de devis acceptées : ");
+		System.out.println("************************************************\n");
 		
 		HashMap<Integer, Integer> approvedEstimateRequests = new HashMap<Integer, Integer>(); 
 		String estimateRequestsStr = "";
@@ -317,7 +325,7 @@ public class ClientsApp extends App {
 		int i = 1;
 		while(rs.next()) {
 			approvedEstimateRequests.put(i, rs.getInt(1));
-			estimateRequestsStr += i + ". " + rs.getString(2) + " - Poste le " + rs.getDate(3) + "\n";
+			estimateRequestsStr += i + ". " + rs.getString(2) + "\n";
 			i++;
 		}
 			
@@ -334,30 +342,30 @@ public class ClientsApp extends App {
 	}
 	
 	private void displayEstimates(int id) throws SQLException {
-		System.out.println("\nListe des devis soumis : ");
-		System.out.println("************************************************");
-		HashMap<Integer, Integer> estimates = new HashMap<Integer, Integer>();
-		String estimatesStr = "";
 		
-		PreparedStatement ps = preparedStmts.get("estimates");
-		ps.setInt(1, id);
-		ResultSet rs = ps.executeQuery();
-		
-		int i = 1;
-		while(rs.next()) {
-			estimates.put(i, rs.getInt(1));
-			estimatesStr += i + ". " + rs.getString(2) + " - Prix: " + rs.getDouble(3) + "€ - Maison: " + rs.getString(4) + "\n";
-			i++;
-		}
-		
-		rs.close();
-			
 		boolean isUsing = true;
 		while(isUsing) {
-			System.out.println();
-			System.out.println(estimatesStr);
+			HashMap<Integer, Integer> estimates = new HashMap<Integer, Integer>();
+			String estimatesStr = "";
+			
+			PreparedStatement ps = preparedStmts.get("estimates");
+			ps.setInt(1, id);
+			ResultSet rs = ps.executeQuery();
+			
+			int i = 1;
+			while(rs.next()) {
+				estimates.put(i, rs.getInt(1));
+				estimatesStr += i + ". " + rs.getString(2) + " - Prix: " + rs.getDouble(3) + " euros - Maison: " + rs.getString(4) + "\n";
+				i++;
+			}
+			
+			rs.close();
+			
+			System.out.println("\nListe des devis soumis : ");
+			System.out.println("************************************************\n");
 			
 			if(estimates.size() > 0) {
+				System.out.println(estimatesStr);
 				System.out.println("Que voulez-vous faire ?");
 				System.out.println("1. Afficher les détails d'un devis");
 				System.out.println("2. Retour");
@@ -372,7 +380,7 @@ public class ClientsApp extends App {
 				}
 				
 			} else {
-				System.out.println("Il n'y a aucun devis soumis pour cette demande.\n");
+				System.out.println("Il n'y a aucun devis soumis pour cette demande.");
 				Utils.blockProgress();
 				isUsing = false;
 			}
@@ -391,7 +399,7 @@ public class ClientsApp extends App {
 		
 		if(rs.next()) {
 			System.out.println("\nDevis : " + rs.getString(1));
-			System.out.println("************************************************");
+			System.out.println("************************************************\n");
 			System.out.println("Prix : " + rs.getDouble(2) + " euros");
 			System.out.println("Maison : " + rs.getString(3));
 						
@@ -399,7 +407,7 @@ public class ClientsApp extends App {
 			do {
 				
 				if(rs.getInt(4) != 0) {
-					optionsStr += i + " " + rs.getString(5) + " - prix : " + rs.getDouble(6) + " euros\n";
+					optionsStr += i + ". " + rs.getString(5) + " - prix : " + rs.getDouble(6) + " euros\n";
 					options.put(i, rs.getInt(4));
 					i++;
 				}
@@ -407,7 +415,7 @@ public class ClientsApp extends App {
 			} while(rs.next());
 			
 			if(options.size() > 0) {
-				System.out.println("\nListes des options : ");
+				System.out.println("\nListes des options disponibles : ");
 				System.out.println(optionsStr);
 			}
 
@@ -415,7 +423,7 @@ public class ClientsApp extends App {
 		
 		rs.close();
 		
-		System.out.println("Que voulez-vous faire ?");
+		System.out.println("\nQue voulez-vous faire ?");
 		System.out.println("1. Accepter ce devis");
 		System.out.println("2. Retour");
 		
@@ -432,17 +440,22 @@ public class ClientsApp extends App {
 		if(Utils.readOorN()) {
 			boolean status = false;
 			Array chosenOptions = null;
-			System.out.println("Voulez-vous choisir des options ?");
 			
-			if(Utils.readOorN()) {
-				int[] integers = Utils.readIntegersBetween(1, options.size());
-				Object[] userChoices = new Object[integers.length];
+			if(options.size() > 0) {
+				System.out.println("Voulez-vous choisir des options ?");
 				
-				for(int i = 0; i < integers.length; i++) {
-					userChoices[i] = (Object) options.get(integers[i]);
+				if(Utils.readOorN()) {
+					System.out.println("Quels options voulez-vous choisir? (exemple: 1, 2, 3)");
+					int[] integers = Utils.readIntegersBetween(1, options.size());
+					Object[] userChoices = new Object[integers.length];
+					
+					for(int i = 0; i < integers.length; i++) {
+						userChoices[i] = (Object) options.get(integers[i]);
+					}
+					
+					chosenOptions = dbConnection.createArrayOf("integer", userChoices);
 				}
 				
-				chosenOptions = dbConnection.createArrayOf("integer", userChoices);
 			}
 			
 			PreparedStatement ps = preparedStmts.get("approveEstimateRequests");
@@ -454,10 +467,11 @@ public class ClientsApp extends App {
 			try {
 				rs = ps.executeQuery();
 				rs.next();
-				System.out.println("Le devis a bien ete accepte!\n");
+				System.out.println("\nLe devis a bien ete accepte!");
+				Utils.blockProgress();
 				status = true;
 			} catch (SQLException e) {
-				System.out.println("Ce devis ne peut-etre accepte.\n");
+				System.out.println("Malheureusement, ce devis ne peut-etre accepte.\n");
 			} finally {
 				
 				if(rs != null) {
@@ -520,7 +534,7 @@ public class ClientsApp extends App {
 				Utils.blockProgress();
 				isUsing = false;
 			} catch (SQLException e) {
-				System.out.println("Les données entrees sont erronnées. Veuillez recommencer.\n");
+				System.out.println("Les donnees entrees sont erronnées. Veuillez recommencer.\n");
 			} finally {
 				
 				if(rs != null) {
@@ -532,25 +546,23 @@ public class ClientsApp extends App {
 		}
 
 	}
-	
-	
-	private void displayStatistics() {
-		System.out.println("Statistiques:");
 		
-		try {
-			PreparedStatement ps = preparedStmts.get("statistics");
-			ResultSet rs = ps.executeQuery();
+	private void displayStatistics() throws SQLException {
+		System.out.println("\nStatistiques des maisons");
+		System.out.println("************************************************");
+		
+		PreparedStatement ps = preparedStmts.get("statistics");
+		ResultSet rs = ps.executeQuery();
 			
-			while(rs.next()) {
-				System.out.println(rs.getString(1));
-				System.out.println("\tChiffre d'affaire: " + rs.getDouble(2) 
-					+ "€\tTaux d'acceptation: " + rs.getDouble(3)  + "\tNbr de fois attrape: " + rs.getInt(4) + "\tNbr de fois a attrape: " + rs.getInt(5));
-			}
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
+		while(rs.next()) {
+			System.out.println("\n" + rs.getString(1));
+			System.out.println("\tChiffre d'affaire: " + rs.getDouble(2) + " euros");
+			System.out.println("\tTaux d'acceptation: " + (rs.getDouble(3)*100) + " pourcent");
+			System.out.println("\tNombre de fois que la maison s'est fait attraper en train de tricher : " + rs.getInt(4) + " fois");
+			System.out.println("\tNombre de fois que la maison a attrape un tricheur : " + rs.getInt(5) + " fois");
 		}
 		
+		rs.close();
 		Utils.blockProgress();		
 	}
 	
