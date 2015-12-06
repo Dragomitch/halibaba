@@ -1,0 +1,1215 @@
+\documentclass[11pt,a4paper]{report}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{fullpage}
+\usepackage{listings}
+\usepackage{graphicx}
+
+
+\title{Projet d'algorithmique: Awale}
+\author{Jeremy Wagemans \and Sebastien Lebon}
+\date{\today}
+
+\begin{document}
+    \lstset{
+        basicstyle=\footnotesize,
+        frame=single,
+        breaklines=true,
+        literate=
+            {é}{{\'e}}1
+            {è}{{\`e}}1
+            {ô}{{\^o}}1
+            {ê}{{\^e}}1
+            {ç}{{\c{c}}}1
+            {à}{{\'a}}1,
+        language=java
+    } 
+
+    \maketitle
+
+    \addcontentsline{toc}{chapter}{Table des mati\`eres}
+    \tableofcontents
+
+    \begingroup
+        \setlength{\parskip}{\baselineskip}
+        \chapter{Introduction}
+
+Afin d’appliquer les méhodologies et les notions enseignées en cours d'Algorithmique, nous avions pour objectif d'implémenter, en java et par groupe de deux, une version jouable du jeu de société africain, Awalé.
+\par
+En effet, celui-ci fait partie de la famille des “Mancala”, catégorie regroupant les jeux de type “compter et capturer”. Il se compose d’un plateau de douze trous répartis en deux rangées égales, contenant chacun quatre graines. Le but est de capturer un maximum de graines au cours d'une partie.\newline
+Il existe une multitude de variantes du jeu, dépendantes de leur région d'origine. C'est la raison pour laquelle les règles du jeu nous ont été imposées.
+\par
+Au terme du projet, nous avons du délivrer une version java du jeu Awalé en parfaite adéquation avec un cahier des charges et répondant à des critères de qualité stricts.
+Ce rapport permet donc d'exposer de manière précise son fonctionnement ainsi que les différentes étapes de son développement et est structuré comme suit.\newline
+Dans un premier temps, le manuel d'utilisateur du jeu sera présenté. Les étapes du fonctionnement du jeu et ses diverses fonctionnalités y seront rigoureusement détaillées.\newline
+Ensuite, chacune des méthodes des classes Etat et PartieAwale, nous ayant permis de porter le jeu en Java, seront développées donnant un aperçu global de l'implémentation.\newline
+Enfin, nous exposerons les divers tests qui nous ont permis d'atteindre le niveau de fiabilité et de qualité nécessaire à la soumission du projet.
+
+    
+    \endgroup
+
+    \setlength{\parskip}{0pt}
+    \chapter{Manuel utilisateur du jeu}
+        \section{Début d'une partie}
+
+            \begin{flushleft}
+                Au lancement de \textit{PartieAwale.java}, deux modes de jeu s’offrent à vous:
+                \begin{itemize}\renewcommand{\labelitemi}{$\bullet$}
+                    \item Le premier permet de jouer seul contre l’ordinateur.
+                    \item Le second permet de faire une partie contre un autre joueur.
+                \end{itemize}
+            \end{flushleft}
+
+\begin{lstlisting} [language=bash]
+**************************************************************
+
+Bienvenue dans le jeu Awalé
+
+**************************************************************
+
+1. Faire une partie solo
+2. Faire une partie multijoueurs
+
+* Veuillez choisir votre mode de jeu:
+\end{lstlisting}
+
+            \begin{flushleft}
+            Pour introduire votre choix, entrez le numéro associé au mode de jeu souhaité puis tapez sur la touche \textit{[ENTRER]}.\newline
+            Si vous décidez de démarrer une partie en mode multijoueur, vous devrez entrer le nom des deux joueurs avant de commencer le jeu.
+            \end{flushleft}            
+
+        \section{Interface du plateau de jeu}
+
+\begin{lstlisting} [language=bash]
+************** Manche 1 - A Juliette de jouer **************
+\end{lstlisting}
+            
+            \begin{flushleft}
+            Le numéro de la manche ainsi que le nom du joueur sont indiqués à chaque tour.
+            \end{flushleft}
+
+\begin{lstlisting} [language=bash]
+Votre adversaire => |4| |4| |4| |4| |4| |4|     Captures: 0
+                    -----------------------
+            Vous => |4| |4| |4| |4| |4| |4|     Captures: 0
+\end{lstlisting}
+
+            \begin{flushleft}
+            Le plateau est toujours représenté de façon à ce que le joueur de la manche ait sa propre rangée de trou en face de lui. Un chiffre entouré par deux barres verticales représente un trou et le nombre de graines qu'il contient (durant la première manche, les trous de chaque joueur contiennent quatre graines chacun). Le score des joueurs est affiché à la droite de leur rangée respective.\newline
+            \underline{Rappel:} le jeu tourne toujours dans le sens des aiguilles d’une montre.
+            \end{flushleft}
+
+\begin{lstlisting} [language=bash]
+Vos jokers encore disponibles:  - Le classement des trous les plus efficaces
+                                - Le nombre de captures pour chaque trou
+\end{lstlisting}
+
+            \begin{flushleft}
+                Ce tableau vous indique le nombre de jokers qu’il vous reste à disposition (pour plus d’informations, veuillez vous référer à la section \textit{2.4 Utiliser un joker}).
+            \end{flushleft}
+
+\begin{lstlisting} [language=bash]
+#### Menu de jeu:
+
+1. Jouer un coup
+2. Afficher l'historique de la partie et jouer un coup
+3. Utiliser un joker et jouer un coup
+
+* Que voulez-vous vous faire (1-3):
+\end{lstlisting}
+
+            \begin{flushleft}
+                Pour utiliser le menu, veuillez introduire un nombre compris entre 1 et 3 en fonction de l’action désirée et appuyez sur la touche \textit{[ENTRER]}.
+            \end{flushleft}
+
+            \begin{flushleft}
+                \underline{Actions possibles:} \newline
+                \begin{itemize}\renewcommand{\labelitemi}{$\bullet$}
+                    \item Choix 1 - Jouer un coup (Voir section \textit{2.3 Jouer un coup}).
+                    \item Choix 2 - Afficher l'historique de la partie et jouer un coup (cette action permet d’afficher un historique complet de chaque manche depuis le début de la partie).
+                    \item Choix 3 - Utiliser un joker et jouer un coup (Voir section \textit{2.4 Utiliser un joker}).
+                \end{itemize}
+            \end{flushleft}
+
+        \section{Jouer un coup}
+
+\begin{lstlisting} [language=bash]
+#### Jouer un coup:
+
+Votre adversaire => |4| |4| |4| |4| |4| |4|     Captures: 0
+                    -----------------------
+            Vous => |4| |4| |4| |4| |4| |4|     Captures: 0
+                     ^   ^   ^   ^   ^   ^
+  Numéro du trou =>  1   2   3   4   5   6
+
+* Quel trou choisissez-vous? (1-6)
+\end{lstlisting}
+
+            \begin{flushleft}
+                La rangée de votre adversaire est toujours affichée au dessus de la votre. La ligne \textit{“Numéro du trou”}, quant à elle, vous indique quelle touche appuyer pour jouer le trou pointé.\newline\newline
+                Pour jouer un trou, veuillez introduire le numéro du trou (compris entre 1 et 6) et appuyez sur la touche \textit{[ENTRER]}.
+                \newline\newline
+                Après avoir sélectionné le trou et avoir joué le coup, le tour se finit et vous passez la main à votre adversaire.
+            \end{flushleft}
+
+        \newpage
+
+        \section{Utiliser un joker}
+
+            \begin{flushleft}
+                Chaque joueur bénéficie de deux jokers à usage unique.
+            \end{flushleft}
+
+\begin{lstlisting} [language=bash]
+#### Utiliser un joker:
+
+1. Jouer un coup sans utiliser de joker
+2. Montrez-moi le classement des trous les plus efficaces
+3. Montrez-moi le nombre de captures pour chaque trou
+
+* Quel joker choisissez-vous?
+\end{lstlisting}
+
+            \begin{flushleft}
+                Le jeu vous propose les jokers suivants:
+            \end{flushleft}
+
+            \begin{flushleft}
+                \begin{itemize}\renewcommand{\labelitemi}{$\bullet$}
+                    \item Afficher le nombre de graines capturées pour chaque trou.
+                    \item Afficher le classement des trous les plus efficaces.
+                \end{itemize}
+            \end{flushleft}
+
+            \begin{flushleft}
+                Une fois le joker utilisé, le jeu vous demandera de jouer un coup. Veuillez introduire le numéro du trou (compris entre 1 et 6) que vous souhaité jouer et appuyez sur la touche \textit{[ENTRER]}.
+            \end{flushleft}
+
+            \subsection{Afficher le nombre de graines capturées pour chaque trou}
+
+\begin{lstlisting} [language=bash]
+#### Prédiction du nombre de captures pour chaque trou:
+
+     Votre adversaire => |2| |2| |2| |2| |2| |2|     Captures: 0
+                         -----------------------
+                 Vous => |1| |3| |5| |7| |9| |11|    Captures: 0
+                          ^   ^   ^   ^   ^   ^
+   Nombres de captures => 3   6   9   12  15  18   
+\end{lstlisting}
+
+            \begin{flushleft}
+                Ce joker vous permet de prédire le nombre de graines capturées pour chaque trou joué. Les chiffres situés sur la ligne \textit{“Nombres de captures”} vous indiquent le nombre de graines capturées après avoir joué le trou pointé.
+            \end{flushleft}
+
+            \subsection{Afficher le classement des trous les plus efficaces}
+
+\begin{lstlisting} [language=bash]
+#### Classement des trous les plus efficaces :
+
+
+Votre adversaire => |2| |2| |2| |2| |2| |2|     Captures: 0
+                    -----------------------
+            Vous => |1| |3| |5| |7| |9| |11|    Captures: 0
+                     ^   ^   ^   ^   ^   ^
+      Classement =>  6   5   4   3   2   1   
+\end{lstlisting}
+
+            \begin{flushleft}
+                Ce joker vous permet de déterminer quel trou vous permet de capturer le plus de graines. Les chiffres situés sur la ligne \textit{“Classement”} vous indiquent l'efficacité de chaque trou. Par conséquent, le trou indiqué par le chiffre 1 vous permet de capturer le plus de graines une fois joué et le trou indiqué par le chiffre 6 celui qui vous permet de capturer le moins de graines.
+            \end{flushleft}
+
+        \section{Fin d'une partie}
+
+\begin{lstlisting} [language=bash]
+**************************************************************
+
+Fin du jeu: Juliette a gagné!
+
+**************************************************************
+\end{lstlisting}
+
+            \begin{flushleft}
+                Ce message indique la fin du jeu et vous affiche le nom du gagnant.
+            \end{flushleft}
+        
+
+
+\chapter{La classe Etat}
+\section{Classe de base et attributs}
+\begin{lstlisting}
+public class Etat {
+    int n;
+    int[] plateau;
+    int[] captures;
+
+    final static int NBR_TROUS = 12;
+    final static int NBR_ADVERSAIRES = 2;
+
+    ...
+
+}
+\end{lstlisting}
+
+\section{Constructeurs}
+\begin{lstlisting}
+// Constructeur de base
+public Etat() {
+    this.n = 0;
+
+    this.plateau = new int[NBR_TROUS];
+    for( int i = 0; i < this.plateau.length; i++ )
+        this.plateau[i] = 4;
+
+    this.captures = new int[NBR_ADVERSAIRES];
+    for( int i = 0; i < this.captures.length; i++ )
+        this.captures[i] = 0;
+}
+\end{lstlisting}
+
+\newpage
+
+\begin{lstlisting}
+// Constructeur pour tours n > 0
+public Etat(Etat etat) {
+    if( etat == null ) throw new IllegalArgumentException("Etat invalide");
+
+    this.n = etat.n;
+
+    this.plateau = new int[NBR_TROUS];
+    for( int i = 0; i < plateau.length; i++ )
+        this.plateau[i] = etat.plateau[i];
+
+    this.captures = new int[NBR_ADVERSAIRES];
+    for( int i = 0; i < captures.length; i++ )
+        this.captures[i] = etat.captures[i];
+}
+\end{lstlisting}
+
+\begin{lstlisting}
+// Constructeur pour les tests
+public Etat(int n, int[] plateau, int[] captures) {
+    if( n < 0 ) throw new IllegalArgumentException("Nombre de tours incorrect");
+    else if( plateau == null || plateau.length > NBR_TROUS ) throw new IllegalArgumentException("Plateau invalide ou taille du tableau > 12");
+    else if( captures == null || captures.length > NBR_ADVERSAIRES ) throw new IllegalArgumentException("Captures invalide ou taille du tableau > 2");
+
+    this.n = n;
+    this.plateau = plateau;
+    this.captures = captures;
+
+}
+\end{lstlisting}
+
+\section{Méthode toString()}
+\begin{lstlisting}
+public String toString(){
+
+    String plateauNord = ""; // Chaine qui représente le contenu du plateau côté nord
+    String plateauSud = ""; // Chaine qui représente le contenu du plateau côté sud
+
+    for( int i=0; i < NBR_TROUS; i++ ) {
+        if( i < 6 )
+            plateauNord += plateau[i] + ", ";
+        else
+            plateauSud = plateau[i] + ", " + plateauSud;
+    }
+
+    String repTextuelle = captures[0] + "\n"; // Représentation textuelle de l'Etat
+    
+    repTextuelle += plateauNord + "\n";
+
+    repTextuelle += plateauSud + "\n";
+
+    repTextuelle += captures[1];
+
+    return repTextuelle;
+
+}
+\end{lstlisting}
+
+\section{Méthode egrene(int t)}
+\begin{lstlisting}
+/**
+* Méthode permettant de récupérer les graines du trou t et d'égrener chaque trou (suivant t) d'une graine jusqu'à ce qu'il n'y en ait plus.
+* Cette méthode modifie les attributs de l'objet courant.
+* @param t position du trou duquel on prend les graines à égréner.
+* @return int la position du dernier trou égréné
+*/
+public int egrene(int t) {
+
+    if( t < 0 || t > NBR_TROUS-1 ) throw new IllegalArgumentException("Numero du trou invalide");
+
+    // On récupère les graines contenues dans le trou t
+    int nbGraines = plateau[t];
+    plateau[t] = 0;
+
+    // Si t vaut NBR_TROUS - 1, position vaut 0 car on passe chez l'adversaire et on boucle le tour
+    int position = (t == NBR_TROUS-1) ? 0 : t+1;
+
+    while( nbGraines > 0 ) {
+
+        // Si le nombre de graines est supérieur ou égal au nombre de trou, on passe le trou duquel
+        // on a récupéré les graines
+        if( position != t ) {
+            plateau[position] += 1;
+            nbGraines--;
+        }
+
+        position++;
+
+        // Une fois qu'on arrive à la fin du plateau, on retourne à la case 0
+        if( position == NBR_TROUS )
+            position = 0;
+
+    }
+
+    return (position == 0) ? NBR_TROUS-1 : position-1;
+
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Méthode estNourri()}
+\begin{lstlisting}
+/**
+* Méthode permettant de savoir si l'adversaire est nourri. Il est nourri si un de ses trous contient au moins une graine.
+* Cette méthode ne modifie pas les attributs de l'objet courant.
+* @return boolean retourne true si l'adversaire est nourri et false s'il ne l'est pas.
+*/
+public boolean estNourri() {
+
+    int position = 0;
+    if( n%2 == 0 ) 
+        position = NBR_TROUS/2;
+    int borneSup = position + (NBR_TROUS/2);
+
+    int nbGraines = 0;
+
+    // Teste pour chaque trou s'il y a une graine. S'arrête dès qu'on en trouve une.
+    while( position < borneSup && nbGraines == 0 ) {
+
+        if( plateau[position] > 0 )
+            nbGraines = plateau[position];
+
+        position++;
+
+    }
+
+    return nbGraines > 0;
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Méthode capture(int t)}
+\begin{lstlisting}
+/**
+* Méthode permettant de capturer les graines de l'adversaire (si un trou contient 2 ou 3 graines) après égrénage
+* Cette méthode modifie les attributs de l'objet courant.
+* @param t numéro du trou à partir duquel on fait nos captures
+* @return int retourne le nombre de graines capturées
+*/
+public int capture(int t) {
+
+    if( t < 0 || t > NBR_TROUS-1 ) throw new IllegalArgumentException("Numéro du trou invalide");
+
+    int nbGraines = 0;
+
+    int position = t;
+
+    int borneMinimale = 0;
+    if( n%2 == 0 )
+        borneMinimale = NBR_TROUS/2;
+
+    int borneMaximale = borneMinimale + (NBR_TROUS/2);
+    
+    // Si position est chez l'adversaire (< borneMaximale && >= borneMinimale) et que position contient 2 ou 3 graines
+    // On capture
+    while( ((position >= borneMinimale) && (position < borneMaximale)) && 
+    (plateau[position] == 2 || plateau[position] == 3) ) {
+
+        nbGraines += plateau[position];
+        plateau[position] = 0;
+        position--;
+
+    }
+
+    return nbGraines;
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Méthode estAffame(int t)}
+\begin{lstlisting}
+/**
+* Méthode permettant de savoir si l'adversaire est affamé après égrénage.
+* Cette méthode ne modifie pas les attributs de l'objet courant.
+* @param t numéro duquel on égrène
+* @return boolean retourne true si l'adversaire est affamé.
+*/
+public boolean estAffame(int t) {
+
+    if( t < 0 || t > NBR_TROUS-1 ) throw new IllegalArgumentException("Numéro du trou invalide");
+    
+    Etat tmp_etat = new Etat(this);
+
+    int positionDerniereGraine = tmp_etat.egrene(t);
+    tmp_etat.capture(positionDerniereGraine);
+
+    return !(tmp_etat.estNourri());
+
+}
+\end{lstlisting}
+
+\section{Méthode estLegal(int t)}
+\begin{lstlisting}
+/**
+* Méthode permettant de savoir si le trou t peut être joué dans l'état courant.
+* Cette méthode ne modifie pas les attributs de l'objet courant.
+* @param t numéro du trou à tester.
+* @return boolean retourne true si.
+*/
+public boolean estLegal(int t) {
+
+    if( t < 0 || t > NBR_TROUS-1 ) throw new IllegalArgumentException("Numéro du trou invalide");
+
+    // Teste si t ne se trouve pas du côté du joueur
+    if( ((n%2 == 0) && (t >= NBR_TROUS/2 && t <= NBR_TROUS-1)) || ((n%2 != 0) && (t >= 0 && t <= (NBR_TROUS/2)-1)) )
+        return false;
+
+    // Teste s'il n'y a pas de graine dans le trou
+    if( plateau[t] == 0 )
+        return false;
+
+    // Teste si l'adversaire est nourri après égrénage
+    Etat tmp_etat = new Etat(this);
+    int positionDerniereGraine = tmp_etat.egrene(t);
+    return tmp_etat.estNourri();
+    
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Méthode joue(int t)}
+\begin{lstlisting}
+/**
+* Méthode permettant de jouer un coup depuis le trou t.
+* Cette méthode ne modifie pas les attributs de l'objet courant.
+* @param t numéro du trou duquel le joueur joue son coup.
+* @return instance de la classe Etat représentant l'Etat après le coup.
+*/
+public Etat joue(int t) {
+
+    if( !estLegal(t) ) throw new IllegalArgumentException("Coup invalide");
+
+    Etat nouvelEtat = new Etat(this);
+    int positionDerniereGraine = nouvelEtat.egrene(t); // On égrène àpd de t
+
+    if( !nouvelEtat.estAffame(t) )
+        nouvelEtat.captures[n%2] += nouvelEtat.capture(positionDerniereGraine); // On capture les graines de l'adversaire
+
+    nouvelEtat.n += 1; // On passe au tour suivant
+
+    return nouvelEtat;
+
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Méthode estTerminee()}
+\begin{lstlisting}
+/**
+* Méthode permettant de savoir si la partie est terminée ou pas.
+* Cette méthode ne modifie pas les attributs de l'objet courant.
+* @return boolean retourne vrai si la partie est terminée.
+*/
+public boolean estTerminee() {
+
+    // Si le nombre de captures >= 25
+    if( captures[0] >= 25 || captures[1] >= 25 )
+        return true;
+
+    // Si l'adversaire est nourri
+    if( estNourri() )
+        return false;
+
+    int i = (n%2)*(NBR_TROUS/2);
+    int borneSup = (n%2 == 0) ? NBR_TROUS/2 : NBR_TROUS;
+    int grainesNecessaires = ((NBR_TROUS/2)-1);
+
+    // Vérifie s'il n'y a plus moyen de nourrir l'adversaire
+    boolean estTerminee = true;
+    while( i < borneSup && estTerminee ) {
+
+        if(plateau[i] > grainesNecessaires)
+            estTerminee = false;
+        i++;
+        grainesNecessaires--;
+
+    }
+
+    return estTerminee;
+
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Méthode pieceCapturees()}
+\begin{lstlisting}
+/**
+* Méthode permettant d'obtenir un tableau de telle sorte que pour chaque indice i du tableau,
+* t[i] représente le nombre de graines capturées lorsque le trou i est joué.
+* Si le trou i ne peut être joué, t[i] sera -1.
+* Cette méthode ne modifie pas les attributs de l'objet courant.
+* @return int[] le tableaut représentant le nombre de graines capturées pour chaque trou.
+*/
+public int[] piecesCapturees() {
+    
+    int[] tableauPiecesCapturees = new int[NBR_TROUS];
+
+    for( int i = 0; i < tableauPiecesCapturees.length; i++ ){
+        if( estLegal(i) ) {
+            tableauPiecesCapturees[i] = joue(i).captures[n%2] - this.captures[n%2]; // On soustrait les captures de l'etat courant avec celles du nouvel état afin d'enregistrer les pieces capturees
+        } else {
+            tableauPiecesCapturees[i] = -1;
+        } 
+    }
+
+    return tableauPiecesCapturees;
+
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Méthode classementDesTrous()}
+\begin{lstlisting}
+/**
+* Méthode permettant d'obtenir un tableau contenant les indices i tel que si i est joué, il y aura plus de captures que si i+1 était joué.
+* Cette méthode ne modifie pas les attributs de l'objet courant.
+* @return int[] le tableau représentant le classement des captures.
+*/
+public int[] classementDesTrous() {
+
+    int[] tableauPiecesCapturees = piecesCapturees();
+    int[] tableauClassementDesTrous = new int[NBR_TROUS]; // Contiendra le classement des indices
+    int[] tmp_tableau = new int[NBR_TROUS]; // Contiendra une copie de tableauPiecesCapturees sans les trous injouables
+
+    // Recopie tous les trous jouables dans tmp_tableau et leur indice dans tableauClassementDesTrous
+    int nbTrousJouables = 0;
+    for( int i = 0; i < tableauPiecesCapturees.length; i++ ) {
+
+        if( tableauPiecesCapturees[i] > -1 ) {
+            tmp_tableau[nbTrousJouables] = tableauPiecesCapturees[i];
+            tableauClassementDesTrous[nbTrousJouables] = i;
+            nbTrousJouables++;
+        }
+
+    }
+
+    // Tri par sélection des tableaux tmp_tableau & tableauClassementDesTrous
+    for( int i = 0; i < nbTrousJouables - 1; i++ ) {
+
+        int indiceMin = i;
+
+        for( int j = i+1; j < nbTrousJouables; j++ ) {
+            if( tmp_tableau[indiceMin] < tmp_tableau[j] ) indiceMin = j;
+        }
+
+        // tri dans tmp_tableau
+        int tmp_value = tmp_tableau[i];
+        tmp_tableau[i] = tmp_tableau[indiceMin];
+        tmp_tableau[indiceMin] = tmp_value;
+
+        // tri dans tableauClassementDesTrous
+        tmp_value = tableauClassementDesTrous[i];
+        tableauClassementDesTrous[i] = tableauClassementDesTrous[indiceMin];
+        tableauClassementDesTrous[indiceMin] = tmp_value;
+    }
+
+    // Optimisation de la taille de tableauClassementDesTrous
+    tmp_tableau = new int[nbTrousJouables];
+    for( int i = 0; i < tmp_tableau.length; i++ )
+        tmp_tableau[i] = tableauClassementDesTrous[i];
+
+    tableauClassementDesTrous = tmp_tableau;
+
+    return tableauClassementDesTrous;
+
+}
+\end{lstlisting}
+
+\chapter{La classe PartieAwale}
+    \section{Classe de base et attributs}
+        \begin{lstlisting}
+public class PartieAwale {
+
+    private static int n;
+    private static Etat[] etats;
+
+    private static int modeDeJeu;
+    private static String[] joueurs;
+    private static boolean[] jokers;
+
+    public static java.util.Scanner scanner = new java.util.Scanner(System.in);
+
+    ...
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode main(String args[])}
+        \begin{lstlisting}
+public static void main(String args[]) {
+    
+    // Initialisation des joueurs
+    joueurs = new String[2];
+
+    // Initialisation des jokers
+    jokers = new boolean[4];
+    for(int i=0; i < jokers.length; i++)
+        jokers[i] = true; // Un joker est encore disponible quand il vaut true
+
+    // Initialisation du tableau d'etats
+    etats = new Etat[40];
+    
+    selectionnerModeDeJeu();
+
+    // Debut du match
+    System.out.println("\n**************************************************************");
+    System.out.println("Début du match: " + joueurs[0] + " vs " + joueurs[1]);
+    System.out.println("**************************************************************");
+    System.out.println("\n");
+
+    etats[n] = new Etat();
+
+    boolean estTerminee = false;
+    while( !estTerminee ) {
+
+        // En mode solo: tour du joueur - en mode multi : tours des joueurs
+        if(modeDeJeu == 2 || ((n%2) == 0 && modeDeJeu == 1)) {
+            System.out.println("************** Manche " + (n+1) + " - A " + joueurs[n%2] + " de jouer **************\n");
+            
+            afficherPlateauComplet();
+
+            afficherMenu();
+        }
+
+        // En mode solo: tour de l'ordinateur
+        if(modeDeJeu == 1 && (n%2) == 1) {
+            jouerCoupIA();
+        }
+
+        n++;
+        estTerminee = etats[n].estTerminee();
+
+    }
+
+    // Fin du jeu
+    System.out.println("**************************************************************");
+    System.out.println("Fin du jeu: " + ( (etats[n].captures[0] > etats[n].captures[1]) ? joueurs[0] : joueurs[1] ) + " a gagne!");
+    System.out.println("**************************************************************");
+    System.out.println("\n");
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode selectionnerModeDeJeu()}
+        \begin{lstlisting}
+/**
+* Méthode permettant d'afficher les différents modes de jeu disponible et d'en sélectionner un.
+* @return void
+*/
+public static void selectionnerModeDeJeu() {
+
+    System.out.println("**************************************************************");
+    System.out.println("Bienvenue dans le jeu Awale");
+    System.out.println("**************************************************************\n");
+
+    System.out.println("1. Faire une partie solo");
+    System.out.println("2. Faire une partie multijoueurs");
+    System.out.println("\n* Veuillez choisir votre mode de jeu:");
+
+    int choix = scanner.nextInt();
+    while( choix < 1 || choix > 2 ) {
+        System.out.println("Mode de jeu incorrect. Veuillez-choisir votre mode de jeu:");
+        choix = scanner.nextInt();
+    }
+
+    if( choix == 1 ) {
+        joueurs[0] = "vous";
+        joueurs[1] = "ordinateur";
+        modeDeJeu = 1;
+    } else {
+        modeDeJeu = 2;
+        System.out.println("* Veuillez introduire le nom du joueur 1:");
+        joueurs[0] = scanner.next();
+        System.out.println();
+
+        System.out.println("* Veuillez introduire le nom du joueur 2:");
+        joueurs[1] = scanner.next();
+        System.out.println();
+    }
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode afficherMenu()}
+        \begin{lstlisting}
+/**
+* Méthode permettant d'afficher le menu du jeu et d'exécuter une action (jouer un coup / afficher l'historique / utiliser un joker)
+* @return void
+*/
+public static void afficherMenu() {
+
+    System.out.println("\n#### Menu de jeu:\n");
+
+    System.out.println("1. Jouer un coup");
+    System.out.println("2. Afficher l'historique de la partie et jouer un coup");
+
+    // On affiche la possibilité de jouer un joker si au moins un joker est disponible
+    boolean peutUtiliserUnJoker = false;
+    if( (n%2 == 0 && (jokers[0] == true || jokers[1] == true)) ||  (n%2 == 1 && (jokers[2] == true || jokers[3] == true)) ){    
+        System.out.println("3. Utiliser un joker et jouer un coup");
+        peutUtiliserUnJoker = true;
+    }
+
+    System.out.println("\n* Que voulez-vous vous faire (1-3):");
+    int choix = scanner.nextInt();
+
+    while( (choix < 1 || choix > 3) || (choix == 3 && !peutUtiliserUnJoker) ) {
+        if(choix == 3 && !peutUtiliserUnJoker)
+            System.out.println("\n* Vous n'avez plus de joker disponible. Que voulez-vous faire? (1-2)");
+        else
+            System.out.println("\n* Le numéro de l'action ne peut être compris qu'entre 1 et 3. Quel voulez-vous faire?");
+
+        choix = scanner.nextInt();      
+    }
+
+    switch(choix) {
+        case 1:
+            jouerUnCoup();
+            break;
+        case 2:
+            afficherDeroulement();
+            break;
+        case 3:
+            utiliserUnJoker();
+            break;  
+    }
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode afficherPlateauComplet()}
+        \begin{lstlisting}
+/**
+* Méthode permettant d'afficher le plateau complet (plateau / captures / jokers disponibles) dans la console de façon user friendly.
+* @return void
+*/
+public static void afficherPlateauComplet() {
+
+    String plateau ="";
+
+    plateau += plateauVisuel() + "\n";
+
+    plateau += "";      
+
+    if( (n%2 == 0 && jokers[0] == true) || (n%2 == 1 && jokers[2] == true) ) {
+        plateau += "\nVos jokers encore disponibles:  - Le nombre de captures pour chaque trou\n";
+
+        if((n%2 == 0 && jokers[1] == true) || (n%2 == 1 && jokers[3] == true))
+            plateau += "                                - Le classement des trous les plus efficaces";
+
+    } else if( (n%2 == 0 && jokers[1] == true) || (n%2 == 1 && jokers[3] == true) ){
+        plateau += "\nVos jokers encore disponibles:  - Le classement des trous les plus efficaces";
+    }
+
+    System.out.println(plateau);
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode plateauVisuel()}
+        \begin{lstlisting}
+/**
+* Méthode permettant d'obtenir une String contenant la version user friendly du plateau.
+* @return String - le plateau
+*/
+public static String plateauVisuel() {
+
+    String plateau = "";
+
+    plateau += "Votre adversaire => ";
+
+    for( int i = ( (n%2 == 0) ? 6 : 0 ); i < ( (n%2 == 0) ? 12 : 6 ); i++ )
+        plateau += "|" + etats[n].plateau[i] + "| ";
+
+    plateau += "    Captures: " + ( (n%2 == 0) ? etats[n].captures[1] : etats[n].captures[0] ) + "\n";
+    plateau += "                    -----------------------\n";
+    plateau += "            Vous => ";
+
+    for( int i = ( (n%2 == 0) ? 5 : 11 ); i >= (n%2)*6; i-- )
+        plateau += "|" + etats[n].plateau[i] + "| ";
+
+    plateau += "    Captures: " + etats[n].captures[n%2];
+
+    return plateau;
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode jouerUnCoup()}
+        \begin{lstlisting}
+/**
+* Méthode permettant de demander au joueur quel trou jouer et le jouer si celui-ci est jouable.
+* Incrémente n et ajoute une nouvelle instance d'Etat à etats
+* @return void
+*/
+public static void jouerUnCoup() {
+
+    System.out.println("\n#### Jouer un coup:\n");
+
+    System.out.println(plateauVisuel());
+
+    String coupVisuel = "";
+    coupVisuel += "                     ^   ^   ^   ^   ^   ^\n";
+    coupVisuel += "   Numéro du trou => 1   2   3   4   5   6\n";
+
+    System.out.println(coupVisuel);
+
+    System.out.println("* Quel trou choisissez-vous? (1-6)");
+
+    // On joue le trou uniquement si joue(int t) de la classe Etat ne renvoit aucune exception
+    boolean estLegal = false;
+    while(!estLegal) {
+
+        int trou = scanner.nextInt();
+
+        if(n%2 == 0)
+            trou = (6 - trou) + 1;
+        else
+            trou = (12 - trou) + 1;
+
+        try {
+            // On double la taille d'etats si le tableau est rempli
+            if(n+1 == etats.length)
+                etats = agrandirTableau(etats);
+
+            etats[n+1] = etats[n].joue(trou - 1);
+
+            estLegal = true;
+        } catch (Exception e) {
+            System.out.println("* Le trou sélectionné est invalide. Quel trou voulez-vous jouer?");
+        }
+
+    }
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode jouerCoupIA()}
+        \begin{lstlisting}
+/**
+* Méthode permettant de jouer le coup le plus efficace en mode solo.
+* Incrémente n et ajoute une nouvelle instance d'Etat à etats
+* @return void
+*/
+public static void jouerCoupIA() {
+
+    System.out.println("************** Manche " + (n+1) + " L'ordinateur a joué son coup **************\n");
+
+    // On cherche le trou le plus efficace
+    int trou = etats[n].classementDesTrous()[0];
+
+    // On double la taille d'etats si le tableau est rempli
+    if(n+1 == etats.length)
+        etats = agrandirTableau(etats);
+
+    etats[n+1] = etats[n].joue(trou);
+
+    System.out.println("* L'ordinateur a joué son coup. Faites [ENTER] pour continuer");
+    try {
+        System.in.read();
+    } catch(Exception e) { }
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode utiliserUnJoker()}
+        \begin{lstlisting}
+/**
+* Méthode permettant de demander au joueur quel joker il veut utiliser, l'utiliser et ensuite jouer un coup.
+* @return void
+*/
+public static void utiliserUnJoker() {
+
+    System.out.println("\n#### Utiliser un joker:\n");
+
+    // On vérifie quels jokers sont encore disponibles
+    boolean capturesDispo = false;
+    if( (n%2 == 0) && (jokers[0] == true) || (n%2 == 1) && (jokers[2] == true) )
+        capturesDispo = true;
+
+    boolean classementDispo = false;
+    if( (n%2 == 0) && (jokers[1] == true) || (n%2 == 1) && (jokers[3] == true) )
+        classementDispo = true;
+
+    // Affichage du menu de sélection sur base des jokers disponibles
+    System.out.println("1. Jouer un coup sans utiliser de joker");
+    if( capturesDispo ) {
+    
+        System.out.println("2. Montrez-moi le nombre de captures pour chaque trou");
+        if( classementDispo )
+            System.out.println("3. Montrez-moi le classement des trous les plus efficaces");
+    
+    } else if( classementDispo )
+        System.out.println("2. Montrez-moi le classement des trous les plus efficaces");
+
+    System.out.println("\n* Quel joker voulez-vous utiliser?");
+    int choix = scanner.nextInt();
+
+    while( choix < 1 || choix > 3 || (capturesDispo && !classementDispo && choix == 3) || (!capturesDispo && classementDispo && choix == 3) || 
+        (!capturesDispo && !classementDispo && (choix == 2 || choix == 3)) ) {
+
+        System.out.println("Le joker sélectionné est invalide. Quel joker voulez-vous utiliser?");
+        choix = scanner.nextInt();
+    }
+
+    switch(choix) {
+        case 1:
+            break;
+        case 2:
+            if(capturesDispo) afficherPredictions();
+            else afficherClassement();
+            break;
+        case 3:
+            afficherClassement();
+            break;
+    }
+    // On joue un coup
+    jouerUnCoup();
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode afficherDeroulement()}
+        \begin{lstlisting}
+/**
+* Méthode permettant d'afficher l'historique du jeu dans la console.
+* @return void
+*/
+public static void afficherDeroulement() {
+
+    System.out.println("\n#### Historique de la partie:\n");
+
+    for(int i=0; i <= n; i++) {
+        System.out.println("**** " + i);
+        System.out.println(etats[i] + "\n");
+    }
+
+    // On joue un coup
+    jouerUnCoup();
+
+}
+        \end{lstlisting}
+
+    \section{Méthode afficherPredictions()}
+        \begin{lstlisting}
+/**
+* Méthode permettant d'afficher dans la console une prédiction du nombre de captures pour chaque trou.
+* @return void
+*/
+public static void afficherPredictions() {
+
+    System.out.println("\n#### Prédiction du nombre de captures pour chaque trou:\n");
+
+    int[] piecesCapturees = etats[n].piecesCapturees();
+
+    String predictions = "";
+    predictions += plateauVisuel() + "\n";
+
+    predictions += "                     ^   ^   ^   ^   ^   ^\n";
+    predictions += "Nbres de captures => ";
+
+    for(int i = ((n%2 == 0) ? 5 : 11); i >= (n%2)*6; i--)
+        predictions += ((piecesCapturees[i] == -1) ? "X" : piecesCapturees[i]) + "   ";
+
+    System.out.println(predictions);
+
+    // Ce joker n'est plus disponible pour le joueur
+    if(n%2 == 0)
+        jokers[0] = false;
+    else
+        jokers[2] = false;
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode afficherClassement()}
+        \begin{lstlisting}
+/**
+* Méthode permettant d'affiche dans la console un classement des trous les plus efficaces.
+* @return void
+*/
+public static void afficherClassement() {
+
+    System.out.println("\n#### Classement des trous les plus efficaces :\n");
+
+    int[] classementDesTrous = etats[n].classementDesTrous();
+
+    // On initialise classementParIndice avec un tableau rempli de 99 pour trouver
+    // les trous injouables par la suite
+    int[] classementParIndice = new int[6];
+    for(int i = 0; i < classementParIndice.length; i++)
+        classementParIndice[i] = 99;
+
+
+    // On trie le classement pour s'adapter à l'affichage des trous
+    for(int i = 0; i < classementDesTrous.length; i++) {
+        if(n%2 == 0)
+            classementParIndice[classementDesTrous[i]] = i;
+        else
+        classementParIndice[classementDesTrous[i]-6] = i;
+    }
+
+    // Affichage du classement en dessous du plateau
+    String classement = "";
+    classement += plateauVisuel() + "\n";
+    classement += "                     ^   ^   ^   ^   ^   ^\n";
+    classement += "       Classement => ";
+
+    for(int i = 5; i >= 0; i--) {
+        if(classementParIndice[i] == 99)
+            classement += "X   ";
+        else
+            classement += (classementParIndice[i]+1) + "   ";
+    }
+
+    System.out.println(classement);
+
+    // Ce joker n'est plus disponible pour le joueur
+    if(n%2 == 0)
+        jokers[1] = false;
+    else
+        jokers[3] = false;
+
+}
+        \end{lstlisting}
+
+        \newpage
+
+    \section{Méthode agrandirTableau(Etat[] tableau)}
+        \begin{lstlisting}
+/**
+* Methode permettant de doubler la taille d'un tableau d'int
+* @param Etat[] tableau dont la taille doit être doublée
+* @return Etat[] tableau dont la taille a été doublée
+*/
+public static Etat[] agrandirTableau(Etat[] tableau) {
+
+    Etat[] nouveauTableau = new Etat[tableau.length * 2];
+
+    for( int i = 0; i < tableau.length; i++ )
+        nouveauTableau[i] = tableau[i];
+
+    return nouveauTableau;
+
+}
+        \end{lstlisting}
+
+\chapter{Les tests}
+
+    \begin{flushleft}
+    Les tests suivants représentent l'ensemble des possibilités à traiter dans le jeu. Chaque test a été éffectué pour les deux rangées du plateau (Nord et Sud) dans la classe TestEtat \textit{(Voir Annexe C)}.
+    \end{flushleft}
+
+    \section{Test de la méthode egrene()}
+
+        \includegraphics[width=15cm]{images/tableau1.png}
+
+    \section{Test de la méthode estNourri()}
+
+        \includegraphics[width=15cm]{images/tableau2.png}
+
+    \section{Test de la méthode capture(int t)}
+
+        \includegraphics[width=15cm]{images/tableau3.png}
+
+    \section{Test de la méthode estAffame(int t)}
+
+        \includegraphics[width=15cm]{images/tableau4.png}
+
+    \section{Test de la méthode estLegal(int t)}
+
+        \includegraphics[width=15cm]{images/tableau5.png}
+
+    \section{Test de la méthode joue(int t)}
+
+        \includegraphics[width=15cm]{images/tableau6.png}
+
+    \section{Test de la méthode estTerminee()}
+
+        \includegraphics[width=15cm]{images/tableau7.png}
+
+    \section{Test de la méthode piecesCapturees()}
+
+        \includegraphics[width=15cm]{images/tableau8.png}
+
+    \section{Test de la méthode classementDesTrous()}
+
+        \includegraphics[width=15cm]{images/tableau9.png}
+
+    \begingroup
+        \setlength{\parskip}{\baselineskip}
+        \chapter{Conclusion}
+A l'issue de deux semaines de travail intensif, nous pouvons affirmer que ce premier projet d'algorithmique s’est terminé sans encombre et dans les délais. Nous avons réalisé une solution répondant parfaitement au cahier des charges, élégante techniquement et garantissant les critères d’évolutivité.
+\par
+Afin de mener à bien et de façon optimale le développement du jeu, nous avons consacré un point d'honneur à l’organisation de celui-ci. Dès lors, nous nous sommes tourné vers plusieurs outils collaboratifs afin d’optimiser le travail en commun et la communication au sein de notre petite équipe. Nous avons donc décidé de travailler avec la solution de versionage et de développement collaboratif de Github. Grâce à elle, nous oeuvrions chacun de notre côté sur deux branches différentes et y transférions nos modifications au fûr et à mesure. Par conséquent, l'outil nous a permis de coder simultanément sans créer de conflits entre nos différentes versions.\newline
+Cependant, n'ayant jamais travaillé avec un tel système auparavant, nous avons éprouvé quelques difficultés à l’intégrer à notre flux de travail dans un premier temps. Une fois tous les concepts acquis, nous avons pu utiliser l’outil au maximum de ses possibilités et pouvons attester de sa facilité d’utilisation et de son efficacité au sein d’un projet en équipe.
+\par
+Ensuite, nous avons accordé beaucoup d’importance au soucis du détails aussi bien au niveau du code que de l’expérience utilisateur. Outre le fait que nous voulions délivrer une solution évolutive, nous avons développé une version du jeu à la fois performante, élégante et simple à utiliser, objectifs assez difficiles à atteindre de prime abord puisqu'elle devait tourner intégralement dans la console java. De ce fait, une série de fonctionnalités supplémentaires ont été rajoutée à la version de base afin d’en augmenter le plaisir de jeu. En effet, nous avons implémenté un système de joker, rendant le jeu plus amusant et plus compliqué à la fois, ainsi qu’un mode de jeu solo permettant d’affronter l’ordinateur en duel.\newline
+De plus, nous avons débuté une version graphique du jeu mais les délais approchants combiné au fait que nous n'avions pas les compétences suffisantes en la matière nous ont contraint d’abandonner l’idée et de nous concentrer sur la version en console.
+\par
+Suite au développement de ce jeu, nous avons également pu dégager plusieurs opportunités de développement futures. Un module de sauvegarde de partie serait une fonctionnalité plus qu'intéressante, permettant aux utilisateurs de continuer leurs parties à n’importe quel moment. De surcroit, nous pensons que la possibilité de jouer contre ses amis en ligne rendrait le jeu encore plus attractif et amusant. Enfin, une version mobile du jeu permettrait d'élargir drastiquement la base d'utilisateurs potentiels.
+\par
+En définitive, nous avons eu l'opportunité, grâce à ce projet, d’améliorer et d'approfondir nos connaissances en java ainsi qu’à nous familiariser aux bonnes pratiques du langage. Nous avons également pu appliquer l'ensemble des savoir-faire acquis en cours d'algorithmique et d'introduction à l'orienté objet. C'est donc avec une certaine fierté que nous délivrons ce premier projet aujourd'hui.
+    \endgroup
+
+    \appendix
+
+    \chapter{Etat.java}
+    \lstinputlisting{Etat.java}
+
+    \chapter{PartieAwale.java}
+    \lstinputlisting{PartieAwale.java}
+
+    \chapter{JeuDeTests.java}
+    \lstinputlisting{TestEtat.java}
+
+\end{document}
+

@@ -1,0 +1,77 @@
+\documentclass[11pt,a4paper]{report}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{fullpage}
+\usepackage{listings}
+\usepackage{graphicx}
+
+
+\title{Projet de SQL: Le Marché d'Halibaba}
+\author{Jeremy Wagemans \and Philippe Dragomir}
+\date{\today}
+
+\begin{document}
+    \lstset{
+        tabsize=2,
+        basicstyle=\footnotesize,
+        frame=single,
+        breaklines=true,
+        literate=
+            {é}{{\'e}}1
+            {è}{{\`e}}1
+            {ô}{{\^o}}1
+            {ê}{{\^e}}1
+            {ç}{{\c{c}}}1
+            {à}{{\'a}}1,
+    }
+
+\maketitle
+
+\addcontentsline{toc}{chapter}{Table des mati\`eres}
+\tableofcontents
+
+\begingroup
+\setlength{\parskip}{\baselineskip}
+\chapter{Introduction}
+
+\endgroup
+
+\setlength{\parskip}{0pt}
+\chapter{blublu}
+
+\chapter{Persistance des données}
+
+\chapter{Base de données}
+
+\section{Script d'installation}
+\lstinputlisting[language=sql]{../SQL/install.sql}
+\newpage
+
+\section{Script d'insertion de données valides}
+\lstinputlisting[language=sql]{../SQL/src/insert_valid_data.sql}
+\newpage
+
+\section{Script d'insertion de données invalides}
+\lstinputlisting[language=sql]{../SQL/src/insert_invalid_data.sql}
+\newpage
+
+\chapter{Application java}
+\section{App.java}
+\lstinputlisting[language=java]{../app/marche_halibaba/src/marche_halibaba/App.java}
+\newpage
+
+\section{ClientsApp.java}
+\lstinputlisting[language=java]{../app/marche_halibaba/src/marche_halibaba/ClientsApp.java}
+\newpage
+
+\section{HousesApp.java}
+\lstinputlisting[language=java]{../app/marche_halibaba/src/marche_halibaba/HousesApp.java}
+\newpage
+
+\section{Utils.java}
+\lstinputlisting[language=java]{../app/marche_halibaba/src/marche_halibaba/Utils.java}
+\newpage
+
+\end{document}
