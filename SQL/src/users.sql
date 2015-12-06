@@ -68,6 +68,13 @@ GRANT ALL PRIVILEGES
 ON ALL SEQUENCES IN SCHEMA marche_halibaba
 TO app_clients;
 
+/* Clients app user */
+
+DROP USER IF EXISTS app_houses;
+
+CREATE USER app_houses
+ENCRYPTED PASSWORD '2S5jn12JndG68hT';
+
 /* PROD ENVIRONMENT
 
 GRANT CONNECT

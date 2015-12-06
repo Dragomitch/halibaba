@@ -22,7 +22,12 @@ BEGIN
     LOOP
       SELECT o.price INTO option_price
       FROM marche_halibaba.options o
-      WHERE o.option_id = option;
+      WHERE o.option_id = option AND
+        o.house_id = arg_house_id;
+
+      IF option_price IS NULL THEN
+        RAISE EXCEPTION 'Cette option n appartient pas à la maison soumissionnaire.';
+      END IF;
 
       INSERT INTO marche_halibaba.estimate_options(price, is_chosen, estimate_id, option_id)
       VALUES (option_price, FALSE, new_estimate_id, option);

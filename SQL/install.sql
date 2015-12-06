@@ -397,7 +397,7 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
           e.is_cancelled = FALSE AND
           er.pub_date + INTERVAL '15' day >= NOW() AND
           er.chosen_estimate IS NULL) e
-      ON h.house_id = e_house_id
+      ON h.house_id = e.e_house_id
   GROUP BY h.house_id, h.name;
 
 
@@ -425,7 +425,12 @@ BEGIN
     LOOP
       SELECT o.price INTO option_price
       FROM marche_halibaba.options o
-      WHERE o.option_id = option;
+      WHERE o.option_id = option AND
+        o.house_id = arg_house_id;
+
+      IF option_price IS NULL THEN
+        RAISE EXCEPTION 'Cette option n appartient pas à la maison soumissionnaire.';
+      END IF;
 
       INSERT INTO marche_halibaba.estimate_options(price, is_chosen, estimate_id, option_id)
       VALUES (option_price, FALSE, new_estimate_id, option);
@@ -451,7 +456,7 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
           e.is_cancelled = FALSE AND
           er.pub_date + INTERVAL '15' day >= NOW() AND
           er.chosen_estimate IS NULL) e
-      ON h.house_id = e_house_id
+      ON h.house_id = e.e_house_id
   GROUP BY h.house_id, h.name;
 
 
@@ -706,6 +711,13 @@ TO app_clients;
 GRANT ALL PRIVILEGES
 ON ALL SEQUENCES IN SCHEMA marche_halibaba
 TO app_clients;
+
+/* Clients app user */
+
+DROP USER IF EXISTS app_houses;
+
+CREATE USER app_houses
+ENCRYPTED PASSWORD '2S5jn12JndG68hT';
 
 /* PROD ENVIRONMENT
 

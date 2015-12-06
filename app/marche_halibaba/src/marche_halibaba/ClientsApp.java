@@ -74,17 +74,20 @@ public class ClientsApp extends App {
 		
 		preparedStmts.put("signup", dbConnection.prepareStatement("SELECT marche_halibaba.signup_client(?, ?, ?, ?)"));
 		
-		preparedStmts.put("signin", dbConnection.prepareStatement("SELECT c_id, u_pswd " +
+		preparedStmts.put("signin", dbConnection.prepareStatement(
+				"SELECT c_id, u_pswd " +
 				"FROM marche_halibaba.signin_users " +
 				"WHERE u_username = ?"));
 		
-		preparedStmts.put("estimateRequests", dbConnection.prepareStatement("SELECT er_id, er_description, remaining_days " +
+		preparedStmts.put("estimateRequests", dbConnection.prepareStatement(
+				"SELECT er_id, er_description, remaining_days " +
 				"FROM marche_halibaba.list_estimate_requests " +
 				"WHERE er_pub_date + INTERVAL '15' day >= NOW() AND " +
 				"er_chosen_estimate IS NULL AND " +
 				"c_id = ?"));
 		
-		preparedStmts.put("approvedEstimateRequests", dbConnection.prepareStatement("SELECT er_id, er_description, er_pub_date, remaining_days " +
+		preparedStmts.put("approvedEstimateRequests", dbConnection.prepareStatement(
+				"SELECT er_id, er_description, er_pub_date, remaining_days " +
 				"FROM marche_halibaba.list_estimate_requests " +
 				"WHERE er_chosen_estimate IS NOT NULL AND " +
 				"c_id = ?"));
@@ -92,20 +95,23 @@ public class ClientsApp extends App {
 		preparedStmts.put("submitEstimateRequests",
 				dbConnection.prepareStatement("SELECT marche_halibaba.submit_estimate_request(?,?,?,?,?,?,?,?,?,?,?)"));
 		
-		preparedStmts.put("estimates", dbConnection.prepareStatement("SELECT e_id, e_description, e_price, " +
-				"e_house_name " +
+		preparedStmts.put("estimates", dbConnection.prepareStatement(
+				"SELECT e_id, e_description, e_price, " +
+						"e_house_name " +
 				"FROM marche_halibaba.clients_list_estimates " +
 				"WHERE e_estimate_request_id = ?"));
 		
-		preparedStmts.put("estimate", dbConnection.prepareStatement("SELECT e_description, e_price, e_house_name, " +
-				"e_option_id, e_option_description, e_option_price " +
+		preparedStmts.put("estimate", dbConnection.prepareStatement(
+				"SELECT e_description, e_price, e_house_name, " +
+						"e_option_id, e_option_description, e_option_price " +
 				"FROM marche_halibaba.estimate_details " +
 				"WHERE e_id = ?"));
 		
 		preparedStmts.put("approveEstimateRequests", dbConnection.prepareStatement("SELECT marche_halibaba.approve_estimate(?, ?, ?)"));
 
-		preparedStmts.put("statistics", dbConnection.prepareStatement("SELECT h.name, h.turnover, h.acceptance_rate, " + 
-				"h.caught_cheating_nbr, h.caught_cheater_nbr " +
+		preparedStmts.put("statistics", dbConnection.prepareStatement(
+				"SELECT h.name, h.turnover, h.acceptance_rate, " + 
+						"h.caught_cheating_nbr, h.caught_cheater_nbr " +
 				"FROM marche_halibaba.houses h "));
 
 	}
@@ -130,7 +136,6 @@ public class ClientsApp extends App {
 						rs.getInt(1) > 0 &&
 						PasswordHash.validatePassword(pswd, rs.getString(2))) {
 					clientId = rs.getInt(1);
-					rs.close();
 					isUsing = false;
 				} else {
 					System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est errone.");
@@ -141,6 +146,7 @@ public class ClientsApp extends App {
 					}
 				}
 				
+				rs.close();
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			} catch (InvalidKeySpecException e) {
