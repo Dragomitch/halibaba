@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.11.11)  6 DEC 2015 21:38
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.11.11)  6 DEC 2015 22:04
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -526,162 +526,55 @@ LaTeX Font Info:    External font `lmex10' loaded for size
  [5
 
 ] [6] [7]
-LaTeX Font Info:    Try loading font information for OMS+lmr on input line 217.
+LaTeX Font Info:    Try loading font information for OMS+lmr on input line 208.
 
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/omslmr.fd
 File: omslmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `OMS/lmr/m/n' in size <9> not available
-(Font)              Font shape `OMS/lmsy/m/n' tried instead on input line 217.
+(Font)              Font shape `OMS/lmsy/m/n' tried instead on input line 208.
  [8] [9] [10]
 [11] [12] [13] [14] [15]
 LaTeX Font Info:    Font shape `OMS/lmr/m/it' in size <9> not available
-(Font)              Font shape `OMS/lmsy/m/n' tried instead on input line 645.
- [16] [17]
-Overfull \hbox (632.62976pt too wide) in paragraph at lines 752--753
-[][] 
- []
-
-
-Overfull \hbox (632.62976pt too wide) in paragraph at lines 755--756
-[][] 
- []
-
-
-Overfull \hbox (632.62976pt too wide) in paragraph at lines 759--760
-[][] 
- []
-
-
-! Package inputenc Error: Unicode char \u8:�\lst@FillFixed@\lst@EC� not set up 
-for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.762 ...T marche_halibaba.submit_estimate('99€ 
-                                                  promo de Noël : nettoyage...
-
-? 
-
-! Package inputenc Error: Keyboard character used is undefined
-(inputenc)                in inputencoding `utf8'.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.762 ...T marche_halibaba.submit_estimate('99€ 
-                                                  promo de Noël : nettoyage...
-
-? 
-
-! Package inputenc Error: Unicode char \u8:�\expandafter not set up for use wit
-h LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.762 ...ba.submit_estimate('99€ promo de Noël 
-                                                  : nettoyage sans râler', ...
-
-? 
-
-! Package inputenc Error: Keyboard character used is undefined
-(inputenc)                in inputencoding `utf8'.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.762 ...ba.submit_estimate('99€ promo de Noël 
-                                                  : nettoyage sans râler', ...
-
-? 
-
-! Package inputenc Error: Unicode char \u8:�\expandafter not set up for use wit
-h LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.762 ...� promo de Noël : nettoyage sans râler'
-                                                  , 99, FALSE, TRUE, 1, 1, '...
-
-? 
-
-! Package inputenc Error: Keyboard character used is undefined
-(inputenc)                in inputencoding `utf8'.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.762 ...� promo de Noël : nettoyage sans râler'
-                                                  , 99, FALSE, TRUE, 1, 1, '...
-
-? 
-
-! Package inputenc Error: Unicode char \u8:�\lst@FillFixed@\lst@EC� not set up 
-for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.763 ...T marche_halibaba.submit_estimate('80€ 
-                                                  sans sourire', 80, FALSE, ...
-
-? 
-
-! Package inputenc Error: Keyboard character used is undefined
-(inputenc)                in inputencoding `utf8'.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.763 ...T marche_halibaba.submit_estimate('80€ 
-                                                  sans sourire', 80, FALSE, ...
-
-? 
-) [18] (../SQL/src/insert_valid_data.sql) [19]
-(../SQL/src/insert_invalid_data.sql [20]) [21]
+(Font)              Font shape `OMS/lmsy/m/n' tried instead on input line 619.
+ [16]) [17] (../SQL/src/insert_valid_data.sql) [18]
+(../SQL/src/insert_invalid_data.sql [19]) [20]
 Chapitre 5.
 (/usr/local/texlive/2015/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2014/09/06 1.5e listings language file
 )
-(../app/marche_halibaba/src/marche_halibaba/App.java) [22
+(../app/marche_halibaba/src/marche_halibaba/App.java) [21
 
 ]
-(../app/marche_halibaba/src/marche_halibaba/ClientsApp.java [23] [24] [25]
-[26] [27] [28] [29] [30] [31] [32]) [33]
-(../app/marche_halibaba/src/marche_halibaba/HousesApp.java [34] [35] [36]
-[37]) [38] (../app/marche_halibaba/src/marche_halibaba/Utils.java [39] [40])
-[41] (./rapport.aux) ) 
+(../app/marche_halibaba/src/marche_halibaba/ClientsApp.java [22] [23] [24]
+[25] [26] [27] [28] [29] [30] [31]) [32]
+(../app/marche_halibaba/src/marche_halibaba/HousesApp.java [33] [34] [35]
+[36]) [37] (../app/marche_halibaba/src/marche_halibaba/Utils.java [38] [39])
+[40]
+Chapitre 6.
+[41
+
+] (./rapport.aux) ) 
 Here is how much of TeX's memory you used:
- 5412 strings out of 493089
- 74263 string characters out of 6134841
+ 5413 strings out of 493089
+ 74241 string characters out of 6134841
  461244 words of memory out of 5000000
- 8781 multiletter control sequences out of 15000+600000
+ 8782 multiletter control sequences out of 15000+600000
  66804 words of font info for 48 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 37i,6n,43p,400b,1925s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm
--ec.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}</
-usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/local/
-texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texlive/20
-15/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texlive/2015/texmf-di
-st/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-dist/fonts/ty
-pe1/public/lm/lmr12.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/
-lm/lmr17.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmr9.pfb
-></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmri9.pfb></usr/loca
-l/texlive/2015/texmf-dist/fonts/type1/public/lm/lmsy9.pfb>
-Output written on rapport.pdf (42 pages, 356735 bytes).
+ 37i,6n,43p,328b,1899s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ec
+.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}</usr
+/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/local/tex
+live/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texlive/2015/
+texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texlive/2015/texmf-dist/
+fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1
+/public/lm/lmr12.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/
+lmr17.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmr9.pfb></
+usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmri9.pfb></usr/local/t
+exlive/2015/texmf-dist/fonts/type1/public/lm/lmsy9.pfb>
+Output written on rapport.pdf (42 pages, 354972 bytes).
 PDF statistics:
  179 PDF objects out of 1000 (max. 8388607)
  124 compressed objects within 2 object streams

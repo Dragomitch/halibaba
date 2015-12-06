@@ -5,10 +5,11 @@
 \contentsline {chapter}{\numberline {3}Persistance des donn\IeC {\'e}es}{4}
 \contentsline {chapter}{\numberline {4}Base de donn\IeC {\'e}es}{5}
 \contentsline {section}{\numberline {4.1}Script d'installation}{5}
-\contentsline {section}{\numberline {4.2}Script d'insertion de donn\IeC {\'e}es valides}{19}
-\contentsline {section}{\numberline {4.3}Script d'insertion de donn\IeC {\'e}es invalides}{20}
-\contentsline {chapter}{\numberline {5}Application java}{22}
-\contentsline {section}{\numberline {5.1}App.java}{22}
-\contentsline {section}{\numberline {5.2}ClientsApp.java}{23}
-\contentsline {section}{\numberline {5.3}HousesApp.java}{34}
-\contentsline {section}{\numberline {5.4}Utils.java}{39}
+\contentsline {section}{\numberline {4.2}Script d'insertion de donn\IeC {\'e}es valides}{18}
+\contentsline {section}{\numberline {4.3}Script d'insertion de donn\IeC {\'e}es invalides}{19}
+\contentsline {chapter}{\numberline {5}Application java}{21}
+\contentsline {section}{\numberline {5.1}App.java}{21}
+\contentsline {section}{\numberline {5.2}ClientsApp.java}{22}
+\contentsline {section}{\numberline {5.3}HousesApp.java}{33}
+\contentsline {section}{\numberline {5.4}Utils.java}{38}
+\contentsline {chapter}{\numberline {6}Conclusion}{41}
