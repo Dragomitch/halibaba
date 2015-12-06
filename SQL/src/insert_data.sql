@@ -1,4 +1,4 @@
--- Insère des clients
+﻿-- Insère des clients
 SELECT marche_halibaba.signup_client('ramsey', 'blublu', 'Ramsey', 'GoT');
 
 -- Insère des maisons
@@ -21,20 +21,19 @@ SELECT marche_halibaba.add_option('Toilettes en bronze', 2000, 1);
 
 
 -- Inserts estimates
-SELECT marche_halibaba.submit_estimate('Super toilettes 1', 1600,FALSE, FALSE, 1, 1, '{1,2,3}', '{6000,4000,2000}');
-SELECT marche_halibaba.submit_estimate('Super toilettes 2', 2000,FALSE, FALSE, 1, 1, '{}', '{}');
-SELECT marche_halibaba.submit_estimate('Super toilettes 3', 3000,FALSE, FALSE, 1, 1, '{1,2,3}', '{6000,4000,2000}');
+SELECT marche_halibaba.submit_estimate('Super toilettes 1', 1600,FALSE, FALSE, 1, 1, '{1,2,3}');
+SELECT marche_halibaba.submit_estimate('Super toilettes 2', 2000,FALSE, FALSE, 1, 1, '{}');
+SELECT marche_halibaba.submit_estimate('Super toilettes 3', 3000,FALSE, FALSE, 1, 1, '{1,2,3}');
 
-SELECT marche_halibaba.submit_estimate('Super 1', 400,FALSE, FALSE, 2, 1, '{}', '{}');
-SELECT marche_halibaba.submit_estimate('Super 2', 600,FALSE, FALSE, 2, 1, '{}', '{}');
-SELECT marche_halibaba.submit_estimate('Super 3', 800,FALSE, FALSE, 2, 1, '{}', '{}');
+SELECT marche_halibaba.submit_estimate('Super 1', 400,FALSE, FALSE, 2, 1, '{}');
+SELECT marche_halibaba.submit_estimate('Super 2', 600,FALSE, FALSE, 2, 1, '{}');
+SELECT marche_halibaba.submit_estimate('Super 3', 800,FALSE, FALSE, 2, 1, '{}');
 
-SELECT marche_halibaba.submit_estimate('Super bis 1', 800,FALSE, FALSE, 3, 1, '{}', '{}');
-SELECT marche_halibaba.submit_estimate('Super bis 2', 1600, TRUE, FALSE, 3, 1, '{}', '{}');
-SELECT marche_halibaba.submit_estimate('Super bis 3', 3200,FALSE, FALSE, 3, 1, '{}', '{}');
-
+SELECT marche_halibaba.submit_estimate('Super bis 1', 800,FALSE, FALSE, 3, 1, '{}');
+SELECT marche_halibaba.submit_estimate('Super bis 2', 1600, TRUE, FALSE, 3, 1, '{}');
+SELECT marche_halibaba.submit_estimate('Super bis 3', 3200,FALSE, FALSE, 3, 1, '{}');
 
 -- Approves estimate 1 (temporary)
-SELECT marche_halibaba.approve_estimate(1, '{1,2}');
 
-SELECT * FROM marche_halibaba.list_estimates_for(1);
+
+

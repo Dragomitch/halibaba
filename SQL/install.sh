@@ -23,6 +23,7 @@ scripts+=('src/triggers_estimate_requests_update.sql')
 scripts+=('src/triggers_options_update.sql')
 scripts+=('src/users.sql')
 scripts+=('src/view_all_submitted_requests.sql')
+scripts+=('src/view_valid_submitted_estimates.sql')
 
 for script in ${scripts[*]} ; do
 

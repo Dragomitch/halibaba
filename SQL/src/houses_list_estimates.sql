@@ -1,19 +1,5 @@
--- Custom type
-
-/**DROP TYPE IF EXISTS marche_halibaba.estimate;
-CREATE TYPE marche_halibaba.estimate
-  AS (
-    estimate_id INTEGER,
-    description TEXT,
-    price NUMERIC(12,2),
-    options_nbr INTEGER,
-    pub_date TIMESTAMP,
-    house_id INTEGER
-  );
-**/
-
--- Procedure
-CREATE OR REPLACE FUNCTION marche_halibaba.houses_list_estimates_for(INTEGER, INTEGER)
+--Deprecated; Delete it ?
+/*CREATE OR REPLACE FUNCTION marche_halibaba.houses_list_estimates_for(INTEGER, INTEGER)
 	RETURNS SETOF marche_halibaba.estimate AS $$
 
 DECLARE
@@ -35,4 +21,4 @@ BEGIN
 	END LOOP;
 	RETURN;
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE 'plpgsql';*/

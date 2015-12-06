@@ -753,4 +753,20 @@ CREATE VIEW marche_halibaba.submitted_requests AS
     AND chosen_estimate IS NULL AND c.client_id= er.client_id
   ORDER BY er.pub_date;
 
+DROP VIEW IF EXISTS marche_halibaba.valid_estimates;
+
+CREATE VIEW marche_halibaba.valid_estimates AS
+  SELECT e.estimate_id AS "e.estimate_id",
+     e.description AS "e.description",
+     e.price AS "e.price",
+       er.estimate_request_id AS "er.estimate_request_id",
+     er.deadline AS "er.deadline",
+       er.description AS "er.description"
+  FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
+  WHERE e.estimate_request_id= er.estimate_request_id
+    AND er.pub_date + INTERVAL '15' day > NOW()
+    AND e.is_cancelled= FALSE 
+    AND er.chosen_estimate IS NULL
+  ORDER BY e.estimate_id;
+
 

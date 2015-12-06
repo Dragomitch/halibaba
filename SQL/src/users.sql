@@ -21,6 +21,15 @@ GRANT ALL PRIVILEGES
 ON ALL FUNCTIONS IN SCHEMA marche_halibaba
 TO app;
 
+GRANT ALL PRIVILEGES
+ON ALL VIEWS IN SCHEMA marche_halibaba
+TO app;
+
+GRANT SELECT ON marche_halibaba.valid_estimates_list 
+TO app;
+
+GRANT SELECT ON marche_halibaba.submitted_requests
+TO app;
 /* PROD ENVIRONMENT
 
 GRANT CONNECT

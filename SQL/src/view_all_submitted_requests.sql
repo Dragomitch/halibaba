@@ -1,7 +1,8 @@
 DROP VIEW IF EXISTS marche_halibaba.submitted_requests;
 
 CREATE VIEW marche_halibaba.submitted_requests AS
-  SELECT er.estimate_request_id AS "er_id", er.description AS "er_description",
+  SELECT er.estimate_request_id AS "er_id", 
+    er.description AS "er_description",
     a.street_name AS "er_construction_id",
     a.zip_code AS "er_construction_zip",
     a.city AS "er_construction_city",
