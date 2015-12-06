@@ -12,5 +12,6 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
           e.is_cancelled = FALSE AND
           er.pub_date + INTERVAL '15' day >= NOW() AND
           er.chosen_estimate IS NULL) e
-      ON h.house_id = e_house_id
+      ON h.house_id = e.e_house_id
   GROUP BY h.house_id, h.name;
+

@@ -17,15 +17,22 @@ BEGIN
   VALUES (arg_description, arg_price, arg_is_secret, arg_is_hiding, NOW(), arg_estimate_request_id, arg_house_id)
     RETURNING estimate_id INTO new_estimate_id;
 
-  FOREACH option IN ARRAY arg_chosen_options
-  LOOP
-    SELECT o.price INTO option_price
-    FROM marche_halibaba.options o
-    WHERE o.option_id = option;
+  IF arg_chosen_options IS NOT NULL THEN
+    FOREACH option IN ARRAY arg_chosen_options
+    LOOP
+      SELECT o.price INTO option_price
+      FROM marche_halibaba.options o
+      WHERE o.option_id = option AND
+        o.house_id = arg_house_id;
 
-    INSERT INTO marche_halibaba.estimate_options(price, is_chosen, estimate_id, option_id)
-    VALUES (option_price, FALSE, new_estimate_id, option);
-  END LOOP;
+      IF option_price IS NULL THEN
+        RAISE EXCEPTION 'Cette option n appartient pas à la maison soumissionnaire.';
+      END IF;
+
+      INSERT INTO marche_halibaba.estimate_options(price, is_chosen, estimate_id, option_id)
+      VALUES (option_price, FALSE, new_estimate_id, option);
+    END LOOP;
+  END IF;
 
   RETURN new_estimate_id;
 END;

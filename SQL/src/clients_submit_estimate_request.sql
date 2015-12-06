@@ -1,3 +1,5 @@
+-- Soumettre une demande de devis
+
 CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate_request(TEXT, DATE, INTEGER, VARCHAR(50), VARCHAR(8), VARCHAR(5), VARCHAR(35), VARCHAR(50), VARCHAR(8), VARCHAR(5), VARCHAR(35))
   RETURNS INTEGER AS $$
 DECLARE

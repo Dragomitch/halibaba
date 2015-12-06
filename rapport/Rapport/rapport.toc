@@ -1,0 +1,52 @@
+\select@language {french}
+\contentsline {chapter}{Table des mati\`eres}{1}
+\contentsline {chapter}{\numberline {1}Introduction}{3}
+\contentsline {chapter}{\numberline {2}Manuel utilisateur du jeu}{4}
+\contentsline {section}{\numberline {2.1}D\IeC {\'e}but d'une partie}{4}
+\contentsline {section}{\numberline {2.2}Interface du plateau de jeu}{4}
+\contentsline {section}{\numberline {2.3}Jouer un coup}{5}
+\contentsline {section}{\numberline {2.4}Utiliser un joker}{6}
+\contentsline {subsection}{\numberline {2.4.1}Afficher le nombre de graines captur\IeC {\'e}es pour chaque trou}{6}
+\contentsline {subsection}{\numberline {2.4.2}Afficher le classement des trous les plus efficaces}{6}
+\contentsline {section}{\numberline {2.5}Fin d'une partie}{7}
+\contentsline {chapter}{\numberline {3}La classe Etat}{8}
+\contentsline {section}{\numberline {3.1}Classe de base et attributs}{8}
+\contentsline {section}{\numberline {3.2}Constructeurs}{8}
+\contentsline {section}{\numberline {3.3}M\IeC {\'e}thode toString()}{9}
+\contentsline {section}{\numberline {3.4}M\IeC {\'e}thode egrene(int t)}{10}
+\contentsline {section}{\numberline {3.5}M\IeC {\'e}thode estNourri()}{11}
+\contentsline {section}{\numberline {3.6}M\IeC {\'e}thode capture(int t)}{12}
+\contentsline {section}{\numberline {3.7}M\IeC {\'e}thode estAffame(int t)}{13}
+\contentsline {section}{\numberline {3.8}M\IeC {\'e}thode estLegal(int t)}{13}
+\contentsline {section}{\numberline {3.9}M\IeC {\'e}thode joue(int t)}{14}
+\contentsline {section}{\numberline {3.10}M\IeC {\'e}thode estTerminee()}{15}
+\contentsline {section}{\numberline {3.11}M\IeC {\'e}thode pieceCapturees()}{16}
+\contentsline {section}{\numberline {3.12}M\IeC {\'e}thode classementDesTrous()}{17}
+\contentsline {chapter}{\numberline {4}La classe PartieAwale}{18}
+\contentsline {section}{\numberline {4.1}Classe de base et attributs}{18}
+\contentsline {section}{\numberline {4.2}M\IeC {\'e}thode main(String args[])}{19}
+\contentsline {section}{\numberline {4.3}M\IeC {\'e}thode selectionnerModeDeJeu()}{20}
+\contentsline {section}{\numberline {4.4}M\IeC {\'e}thode afficherMenu()}{21}
+\contentsline {section}{\numberline {4.5}M\IeC {\'e}thode afficherPlateauComplet()}{22}
+\contentsline {section}{\numberline {4.6}M\IeC {\'e}thode plateauVisuel()}{23}
+\contentsline {section}{\numberline {4.7}M\IeC {\'e}thode jouerUnCoup()}{24}
+\contentsline {section}{\numberline {4.8}M\IeC {\'e}thode jouerCoupIA()}{25}
+\contentsline {section}{\numberline {4.9}M\IeC {\'e}thode utiliserUnJoker()}{26}
+\contentsline {section}{\numberline {4.10}M\IeC {\'e}thode afficherDeroulement()}{27}
+\contentsline {section}{\numberline {4.11}M\IeC {\'e}thode afficherPredictions()}{27}
+\contentsline {section}{\numberline {4.12}M\IeC {\'e}thode afficherClassement()}{28}
+\contentsline {section}{\numberline {4.13}M\IeC {\'e}thode agrandirTableau(Etat[] tableau)}{29}
+\contentsline {chapter}{\numberline {5}Les tests}{30}
+\contentsline {section}{\numberline {5.1}Test de la m\IeC {\'e}thode egrene()}{30}
+\contentsline {section}{\numberline {5.2}Test de la m\IeC {\'e}thode estNourri()}{31}
+\contentsline {section}{\numberline {5.3}Test de la m\IeC {\'e}thode capture(int t)}{31}
+\contentsline {section}{\numberline {5.4}Test de la m\IeC {\'e}thode estAffame(int t)}{32}
+\contentsline {section}{\numberline {5.5}Test de la m\IeC {\'e}thode estLegal(int t)}{32}
+\contentsline {section}{\numberline {5.6}Test de la m\IeC {\'e}thode joue(int t)}{33}
+\contentsline {section}{\numberline {5.7}Test de la m\IeC {\'e}thode estTerminee()}{33}
+\contentsline {section}{\numberline {5.8}Test de la m\IeC {\'e}thode piecesCapturees()}{34}
+\contentsline {section}{\numberline {5.9}Test de la m\IeC {\'e}thode classementDesTrous()}{34}
+\contentsline {chapter}{\numberline {6}Conclusion}{35}
+\contentsline {chapter}{\numberline {A}Etat.java}{37}
+\contentsline {chapter}{\numberline {B}PartieAwale.java}{44}
+\contentsline {chapter}{\numberline {C}JeuDeTests.java}{53}

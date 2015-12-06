@@ -1,3 +1,5 @@
+-- Enregistrer un client
+
 CREATE OR REPLACE FUNCTION marche_halibaba.signup_client(VARCHAR(35), VARCHAR(50), VARCHAR(35), VARCHAR(35))
   RETURNS INTEGER AS $$
 DECLARE

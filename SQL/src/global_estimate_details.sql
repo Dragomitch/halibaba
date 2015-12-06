@@ -1,4 +1,7 @@
+-- Afficher les demandes de devis
+
 DROP VIEW IF EXISTS marche_halibaba.estimate_details;
+
 CREATE VIEW marche_halibaba.estimate_details AS
   SELECT e.estimate_id as "e_id", e.description as "e_description",
     e.price as "e_price", e.is_cancelled as "e_is_cancelled",
