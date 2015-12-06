@@ -1,7 +1,6 @@
 
--- Removes all previous data
+-- Supprimer toutes les données existantes
 DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
-DROP SCHEMA IF EXISTS unit_tests CASCADE;
 
 -- Schema
 CREATE SCHEMA marche_halibaba;
@@ -115,7 +114,10 @@ CREATE VIEW marche_halibaba.signin_users AS
       ON u.user_id = h.user_id;
 
 
+-- Afficher les demandes de devis
+
 DROP VIEW IF EXISTS marche_halibaba.estimate_details;
+
 CREATE VIEW marche_halibaba.estimate_details AS
   SELECT e.estimate_id as "e_id", e.description as "e_description",
     e.price as "e_price", e.is_cancelled as "e_is_cancelled",
@@ -166,6 +168,8 @@ CREATE VIEW marche_halibaba.list_estimate_options AS
   WHERE eo.option_id = o.option_id;
 
 
+-- Enregistrer un client
+
 CREATE OR REPLACE FUNCTION marche_halibaba.signup_client(VARCHAR(35), VARCHAR(50), VARCHAR(35), VARCHAR(35))
   RETURNS INTEGER AS $$
 DECLARE
@@ -187,6 +191,8 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
+
+-- Afficher les devis visibles par un client
 
 DROP VIEW IF EXISTS marche_halibaba.clients_list_estimates;
 
@@ -239,6 +245,8 @@ CREATE VIEW marche_halibaba.clients_list_estimates AS
   ORDER BY view.submission_date DESC;
 
 
+-- Soumettre une demande de devis
+
 CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate_request(TEXT, DATE, INTEGER, VARCHAR(50), VARCHAR(8), VARCHAR(5), VARCHAR(35), VARCHAR(50), VARCHAR(8), VARCHAR(5), VARCHAR(35))
   RETURNS INTEGER AS $$
 DECLARE
@@ -283,6 +291,8 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
+-- Accepter une demande de devis
+
 CREATE OR REPLACE FUNCTION marche_halibaba.approve_estimate(INTEGER, INTEGER[], INTEGER)
   RETURNS INTEGER AS $$
 
@@ -290,30 +300,30 @@ DECLARE
   arg_estimate_id ALIAS FOR $1;
   arg_chosen_options ALIAS FOR $2;
   arg_client_id ALIAS FOR $3;
-  er_id INTEGER;
-  er_client_id INTEGER;
-  option INTEGER;
+  var_er_id INTEGER;
+  var_er_client_id INTEGER;
+  var_option INTEGER;
 BEGIN
   SELECT e.estimate_request_id, er.client_id
-  INTO er_id, er_client_id
+  INTO var_er_id, var_er_client_id
   FROM marche_halibaba.estimate_requests er, marche_halibaba.estimates e
   WHERE e.estimate_request_id = er.estimate_request_id AND
     e.estimate_id = arg_estimate_id;
 
-  IF er_client_id <> arg_client_id THEN
-    RAISE EXCEPTION 'Vous n etes pas autorise a accepter ce devis';
+  IF var_er_client_id <> arg_client_id THEN
+    RAISE EXCEPTION 'Vous n êtes pas autorisé à accepter ce devis';
   END IF;
 
   UPDATE marche_halibaba.estimate_requests er
   SET chosen_estimate = arg_estimate_id
-  WHERE estimate_request_id = er_id;
+  WHERE estimate_request_id = var_er_id;
 
   IF arg_chosen_options IS NOT NULL THEN
-    FOREACH option IN ARRAY arg_chosen_options
+    FOREACH var_option IN ARRAY arg_chosen_options
     LOOP
       UPDATE marche_halibaba.estimate_options
       SET is_chosen = TRUE
-      WHERE option_id = option AND
+      WHERE option_id = var_option AND
         estimate_id = arg_estimate_id;
     END LOOP;
   END IF;
@@ -374,17 +384,20 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 DROP VIEW IF EXISTS marche_halibaba.valid_estimates_nbr;
+
 CREATE VIEW marche_halibaba.valid_estimates_nbr AS
   SELECT h.house_id as "h_id", h.name as "h_name",
-    count(e.estimate_id) as "h_valid_estimates_nbr"
+    count(e_id) as "h_valid_estimates_nbr"
   FROM marche_halibaba.houses h
-    LEFT OUTER JOIN marche_halibaba.estimates e
-      ON h.house_id = e.house_id AND
-        e.is_cancelled = FALSE
-    LEFT OUTER JOIN marche_halibaba.estimate_requests er
-      ON e.estimate_request_id = er.estimate_request_id AND
-        er.pub_date + INTERVAL '15' day >= NOW() AND
-        er.chosen_estimate IS NULL
+    LEFT OUTER JOIN (
+        SELECT e.estimate_id as "e_id", e.house_id as "e_house_id"
+        FROM marche_halibaba.estimates e,
+          marche_halibaba.estimate_requests er
+        WHERE e.estimate_request_id = er.estimate_request_id AND
+          e.is_cancelled = FALSE AND
+          er.pub_date + INTERVAL '15' day >= NOW() AND
+          er.chosen_estimate IS NULL) e
+      ON h.house_id = e_house_id
   GROUP BY h.house_id, h.name;
 
 
@@ -425,17 +438,20 @@ $$ LANGUAGE 'plpgsql';
 
 
 DROP VIEW IF EXISTS marche_halibaba.valid_estimates_nbr;
+
 CREATE VIEW marche_halibaba.valid_estimates_nbr AS
   SELECT h.house_id as "h_id", h.name as "h_name",
-    count(e.estimate_id) as "h_valid_estimates_nbr"
+    count(e_id) as "h_valid_estimates_nbr"
   FROM marche_halibaba.houses h
-    LEFT OUTER JOIN marche_halibaba.estimates e
-      ON h.house_id = e.house_id AND
-        e.is_cancelled = FALSE
-    LEFT OUTER JOIN marche_halibaba.estimate_requests er
-      ON e.estimate_request_id = er.estimate_request_id AND
-        er.pub_date + INTERVAL '15' day >= NOW() AND
-        er.chosen_estimate IS NULL
+    LEFT OUTER JOIN (
+        SELECT e.estimate_id as "e_id", e.house_id as "e_house_id"
+        FROM marche_halibaba.estimates e,
+          marche_halibaba.estimate_requests er
+        WHERE e.estimate_request_id = er.estimate_request_id AND
+          e.is_cancelled = FALSE AND
+          er.pub_date + INTERVAL '15' day >= NOW() AND
+          er.chosen_estimate IS NULL) e
+      ON h.house_id = e_house_id
   GROUP BY h.house_id, h.name;
 
 

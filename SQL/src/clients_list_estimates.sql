@@ -1,3 +1,5 @@
+-- Afficher les devis visibles par un client
+
 DROP VIEW IF EXISTS marche_halibaba.clients_list_estimates;
 
 CREATE VIEW marche_halibaba.clients_list_estimates AS
