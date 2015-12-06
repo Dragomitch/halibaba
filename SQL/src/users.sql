@@ -30,6 +30,10 @@ TO app;
 
 GRANT SELECT ON marche_halibaba.submitted_requests
 TO app;
+
+GRANT SELECT ON marche_halibaba.valid_estimates_nbr
+TO app;
+
 /* PROD ENVIRONMENT
 
 GRANT CONNECT
