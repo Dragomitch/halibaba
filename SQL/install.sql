@@ -159,15 +159,6 @@ CREATE VIEW marche_halibaba.list_estimate_requests AS
   ORDER BY er.pub_date DESC;
 
 
-DROP VIEW IF EXISTS marche_halibaba.list_estimate_options;
-
-CREATE VIEW marche_halibaba.list_estimate_options AS
-  SELECT o.option_id as "o_id", eo.estimate_id as "e_id",
-    o.description as "o_description", eo.price as "eo_price"
-  FROM marche_halibaba.estimate_options eo, marche_halibaba.options o
-  WHERE eo.option_id = o.option_id;
-
-
 -- Enregistrer un client
 
 CREATE OR REPLACE FUNCTION marche_halibaba.signup_client(VARCHAR(35), VARCHAR(50), VARCHAR(35), VARCHAR(35))
@@ -442,69 +433,51 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-DROP VIEW IF EXISTS marche_halibaba.valid_estimates_nbr;
-
-CREATE VIEW marche_halibaba.valid_estimates_nbr AS
-  SELECT h.house_id as "h_id", h.name as "h_name",
-    count(e_id) as "h_valid_estimates_nbr"
-  FROM marche_halibaba.houses h
-    LEFT OUTER JOIN (
-        SELECT e.estimate_id as "e_id", e.house_id as "e_house_id"
-        FROM marche_halibaba.estimates e,
-          marche_halibaba.estimate_requests er
-        WHERE e.estimate_request_id = er.estimate_request_id AND
-          e.is_cancelled = FALSE AND
-          er.pub_date + INTERVAL '15' day >= NOW() AND
-          er.chosen_estimate IS NULL) e
-      ON h.house_id = e.e_house_id
-  GROUP BY h.house_id, h.name;
-
-
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_insert()
   RETURNS TRIGGER AS $$
 
-DECLARE 
+DECLARE
   new_estimate_request_id INTEGER;
   caught_cheating_house_id INTEGER;
   house_times_record RECORD;
 
 BEGIN
-  
-  SELECT h.penalty_expiration AS penalty_expiration, 
+
+  SELECT h.penalty_expiration AS penalty_expiration,
     h.secret_limit_expiration AS secret_limit_expiration,
     h.hiding_limit_expiration AS hiding_limit_expiration
   INTO house_times_record
   FROM marche_halibaba.houses h
   WHERE h.house_id= NEW.house_id;
 
-  SELECT h.house_id 
+  SELECT h.house_id
     INTO caught_cheating_house_id
   FROM marche_halibaba.estimates e, marche_halibaba.houses h
   WHERE e.estimate_request_id= NEW.estimate_request_id
     AND e.house_id= h.house_id
     AND e.is_hiding= TRUE AND e.is_cancelled= FALSE;
 
-  IF house_times_record.penalty_expiration > NOW() 
-  THEN 
+  IF house_times_record.penalty_expiration > NOW()
+  THEN
     RAISE EXCEPTION 'Vous êtes interdit de devis pour encore % heures.', age( house_times_record.penalty_expiration, NOW());
   END IF;
 
   IF EXISTS( --If the estimate_request is expired, we raise a exception;
   SELECT *
   FROM marche_halibaba.estimate_requests er
-  WHERE er.estimate_request_id= NEW.house_id  
-    AND er.deadline< NOW()
-  )THEN 
-    RAISE EXCEPTION 'Cette demande de devis est expirée.';
+  WHERE er.estimate_request_id = NEW.estimate_request_id AND
+    (er.pub_date + INTERVAL '15' day < NOW() OR er.chosen_estimate IS NOT NULL)
+  ) THEN
+    RAISE EXCEPTION 'Cette demande de devis est expirée/un devis a déjà été accepté pour cette demande.';
   END IF;
-  
+
   IF NEW.is_hiding= TRUE
   THEN
     IF house_times_record.hiding_limit_expiration > NOW() --On vérifie que l'on peut soumettre un devis hiding actuellement
-    THEN 
+    THEN
       RAISE EXCEPTION 'Vous ne pouvez pas poster de devis masquant pour encore %.',age( house_times_record.hiding_limit_expiration, NOW()) ;
     ELSEIF caught_cheating_house_id IS NOT NULL --S'il y a déjà un devis masquant pour cette estimate_request
-    THEN 
+    THEN
       UPDATE marche_halibaba.houses
       SET penalty_expiration = NOW() + INTERVAL '1' day,
         caught_cheating_nbr = caught_cheating_nbr+1
@@ -520,7 +493,7 @@ BEGIN
         AND estimate_request_id= NEW.estimate_request_id
         AND is_hiding= TRUE;
 
-      UPDATE marche_halibaba.estimates 
+      UPDATE marche_halibaba.estimates
       SET is_cancelled= TRUE
       WHERE house_id= caught_cheating_house_id
         AND submission_date >= NOW() - INTERVAL '1' day;
@@ -529,20 +502,20 @@ BEGIN
       NEW.is_secret:=FALSE; --Justifier dans le rapport que si on ne set pas secret à false, on ne pourrait pas poster, juste après celui-ci, un devis secret & hiding  mais seulement hiding. Et qu'ainsi on a réellement un devis normal soumis.
 
     ELSE
-      UPDATE marche_halibaba.houses 
-      SET hiding_limit_expiration= NOW()+ INTERVAL '7' day 
+      UPDATE marche_halibaba.houses
+      SET hiding_limit_expiration= NOW()+ INTERVAL '7' day
       WHERE house_id= NEW.house_id;
     END IF;
   END IF;
 
   IF NEW.is_secret= TRUE
   THEN
-    IF house_times_record.secret_limit_expiration > NOW() 
+    IF house_times_record.secret_limit_expiration > NOW()
     THEN
       RAISE EXCEPTION 'Vous ne pouvez pas poster de devis secret pour encore % heures.',age( house_times_record.secret_limit_expiration, NOW()) ;
     ELSE
-      UPDATE marche_halibaba.houses 
-      SET secret_limit_expiration= NOW()+ INTERVAL '1' day 
+      UPDATE marche_halibaba.houses
+      SET secret_limit_expiration= NOW()+ INTERVAL '1' day
       WHERE house_id= NEW.house_id;
     END IF;
   END IF;
@@ -555,6 +528,7 @@ CREATE TRIGGER trigger_estimate_insert
 BEFORE INSERT ON marche_halibaba.estimates
 FOR EACH ROW
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_insert();
+
 
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_requests_update()
   RETURNS TRIGGER AS $$
@@ -642,35 +616,15 @@ WHEN (OLD.is_chosen IS DISTINCT FROM NEW.is_chosen)
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
 
 
-/* DEV ENVIRONMENT */
-/*
-DROP USER IF EXISTS app;
-
-CREATE USER app
-ENCRYPTED PASSWORD '2S5jn12JndG68hT';
-
-GRANT ALL PRIVILEGES
-ON ALL TABLES IN SCHEMA marche_halibaba
-TO app;
-
-GRANT ALL PRIVILEGES
-ON SCHEMA marche_halibaba
-TO app;
-
-GRANT ALL PRIVILEGES
-ON ALL SEQUENCES IN SCHEMA marche_halibaba
-TO app;
-
-GRANT ALL PRIVILEGES
-ON ALL FUNCTIONS IN SCHEMA marche_halibaba
-TO app;*/
-
 /* Clients app user */
-
 DROP USER IF EXISTS app_clients;
 
 CREATE USER app_clients
 ENCRYPTED PASSWORD '2S5jn12JndG68hT';
+
+GRANT CONNECT
+ON DATABASE projet
+TO app_clients;
 
 GRANT USAGE
 ON SCHEMA marche_halibaba
@@ -718,51 +672,5 @@ DROP USER IF EXISTS app_houses;
 
 CREATE USER app_houses
 ENCRYPTED PASSWORD '2S5jn12JndG68hT';
-
-/* PROD ENVIRONMENT
-
-GRANT CONNECT
-ON DATABASE dbjwagema15
-TO pdragom15;
-
-GRANT SELECT
-ON ALL TABLES IN SCHEMA marche_halibaba
-TO pdragom15;
-
---GRANT INSERT
---ON TABLE users, clients, estimate_requests, addresses
-
---GRANT UPDATE
---ON estimate_options, estimate_requests
-
-GRANT ALL PRIVILEGES
-ON SCHEMA marche_halibaba
-TO pdragom15;
-
-GRANT ALL PRIVILEGES
-ON ALL SEQUENCES IN SCHEMA marche_halibaba
-TO pdragom15;
-
-GRANT EXECUTE
-ON ALL FUNCTIONS IN SCHEMA marche_halibaba
-TO pdragom15; */
-
-
--- Insère des clients
-SELECT marche_halibaba.signup_client('ramsey', '1000:ce2723bacc00ffd71a3c3dd7a712d16cfc023aa781d5fec5:b77f9f0e005c806c6577a0e5a423e4095c70f7a33b16d7a057c76237e4628adc8349555c6c314b6f08b115d45efe44643089823f849e2b27b55a353879b42895928c1ffb9f12b7b51a1b166c947b643c43716bc2a1a3996d185e00937c993454', 'Ramsey', 'GoT');
-SELECT marche_halibaba.submit_estimate_request('Nettoyer mes toilettes', '2016-05-31', 1, 'In de Poort', '26', '1970', 'Wezembeek-Oppem', null, null, null, null);
-
-SELECT marche_halibaba.signup_house('starque', '1000:ce2723bacc00ffd71a3c3dd7a712d16cfc023aa781d5fec5:b77f9f0e005c806c6577a0e5a423e4095c70f7a33b16d7a057c76237e4628adc8349555c6c314b6f08b115d45efe44643089823f849e2b27b55a353879b42895928c1ffb9f12b7b51a1b166c947b643c43716bc2a1a3996d185e00937c993454', 'Starque');
-SELECT marche_halibaba.add_option('Avec le sourire', 50, 1);
-SELECT marche_halibaba.submit_estimate('nettoyage', 100, FALSE, FALSE, 1, 1, '{1}');
-
-SELECT marche_halibaba.signup_house('boltone', '1000:ce2723bacc00ffd71a3c3dd7a712d16cfc023aa781d5fec5:b77f9f0e005c806c6577a0e5a423e4095c70f7a33b16d7a057c76237e4628adc8349555c6c314b6f08b115d45efe44643089823f849e2b27b55a353879b42895928c1ffb9f12b7b51a1b166c947b643c43716bc2a1a3996d185e00937c993454', 'Boltone');
-SELECT marche_halibaba.submit_estimate('nettoyage, sourire compris', 90, TRUE, FALSE, 1, 2, '{}');
-
-SELECT marche_halibaba.submit_estimate('99€ promo de Noël : nettoyage sans râler', 99, FALSE, TRUE, 1, 1, '{}');
-SELECT marche_halibaba.submit_estimate('80€ sans sourire', 80, FALSE, TRUE, 1, 2, '{}');
-SELECT marche_halibaba.submit_estimate('test 123', 10000, FALSE, FALSE, 1, 1, '{1}');
-
-SELECT marche_halibaba.approve_estimate(4, '{}',1);
 
 

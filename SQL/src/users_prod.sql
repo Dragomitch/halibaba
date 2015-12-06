@@ -1,0 +1,19 @@
+GRANT CONNECT
+ON DATABASE dbjwagema15
+TO pdragom15;
+
+GRANT ALL PRIVILEGES
+ON ALL TABLES IN SCHEMA marche_halibaba
+TO pdragom15;
+
+GRANT ALL PRIVILEGES
+ON SCHEMA marche_halibaba
+TO pdragom15;
+
+GRANT ALL PRIVILEGES
+ON ALL SEQUENCES IN SCHEMA marche_halibaba
+TO pdragom15;
+
+GRANT ALL PRIVILEGES
+ON ALL FUNCTIONS IN SCHEMA marche_halibaba
+TO pdragom15;

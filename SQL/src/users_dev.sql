@@ -1,32 +1,12 @@
-/* DEV ENVIRONMENT */
-/*
-DROP USER IF EXISTS app;
-
-CREATE USER app
-ENCRYPTED PASSWORD '2S5jn12JndG68hT';
-
-GRANT ALL PRIVILEGES
-ON ALL TABLES IN SCHEMA marche_halibaba
-TO app;
-
-GRANT ALL PRIVILEGES
-ON SCHEMA marche_halibaba
-TO app;
-
-GRANT ALL PRIVILEGES
-ON ALL SEQUENCES IN SCHEMA marche_halibaba
-TO app;
-
-GRANT ALL PRIVILEGES
-ON ALL FUNCTIONS IN SCHEMA marche_halibaba
-TO app;*/
-
 /* Clients app user */
-
 DROP USER IF EXISTS app_clients;
 
 CREATE USER app_clients
 ENCRYPTED PASSWORD '2S5jn12JndG68hT';
+
+GRANT CONNECT
+ON DATABASE projet
+TO app_clients;
 
 GRANT USAGE
 ON SCHEMA marche_halibaba
@@ -74,31 +54,3 @@ DROP USER IF EXISTS app_houses;
 
 CREATE USER app_houses
 ENCRYPTED PASSWORD '2S5jn12JndG68hT';
-
-/* PROD ENVIRONMENT
-
-GRANT CONNECT
-ON DATABASE dbjwagema15
-TO pdragom15;
-
-GRANT SELECT
-ON ALL TABLES IN SCHEMA marche_halibaba
-TO pdragom15;
-
---GRANT INSERT
---ON TABLE users, clients, estimate_requests, addresses
-
---GRANT UPDATE
---ON estimate_options, estimate_requests
-
-GRANT ALL PRIVILEGES
-ON SCHEMA marche_halibaba
-TO pdragom15;
-
-GRANT ALL PRIVILEGES
-ON ALL SEQUENCES IN SCHEMA marche_halibaba
-TO pdragom15;
-
-GRANT EXECUTE
-ON ALL FUNCTIONS IN SCHEMA marche_halibaba
-TO pdragom15; */
