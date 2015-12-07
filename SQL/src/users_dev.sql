@@ -32,7 +32,7 @@ TO app_clients;
 GRANT SELECT, UPDATE, TRIGGER
 ON marche_halibaba.estimate_requests,
   marche_halibaba.estimate_options,
-  marche_halibaba.houses
+  marche_halibaba.houses,
 TO app_clients;
 
 GRANT EXECUTE
@@ -65,9 +65,9 @@ TO app_houses;
 
 GRANT SELECT 
 ON marche_halibaba.signin_users,
+  marche_halibaba.list_estimate_requests,
   marche_halibaba.valid_estimates_list,
   marche_halibaba.houses,
-  marche_halibaba.list_estimate_requests,
   marche_halibaba.options,
   marche_halibaba.valid_estimates_nbr
 TO app_houses;
@@ -83,13 +83,20 @@ TO app_houses;
 GRANT SELECT, UPDATE, TRIGGER
 ON marche_halibaba.estimates,
   marche_halibaba.estimate_options,
-  marche_halibaba.houses
+  marche_halibaba.estimate_requests,
+  marche_halibaba.houses,
+  marche_halibaba.options
 TO app_houses;
 
 GRANT EXECUTE
 ON FUNCTION 
-marche_halibaba.signup_houses(VARCHAR(35), VARCHAR(50), VARCHAR(35), VARCHAR(35)),
+marche_halibaba.signup_house(VARCHAR(35), VARCHAR(50), VARCHAR(35)),
 marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[]),
 marche_halibaba.add_option(TEXT, NUMERIC(12,2), INTEGER),
+marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER),
 marche_halibaba.trigger_estimate_insert()
+TO app_houses;
+
+GRANT ALL PRIVILEGES
+ON ALL SEQUENCES IN SCHEMA marche_halibaba
 TO app_houses;

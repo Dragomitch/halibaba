@@ -99,10 +99,10 @@ public class HousesApp extends App{
 		
 		preparedStmts.put("add_option", dbConnection.prepareStatement(
 				"SELECT marche_halibaba.add_option(?, ?, ?)"));
-		
+
 		preparedStmts.put("list_options", dbConnection.prepareStatement(
-				"SELECT * "+
-				"FROM marche_halibaba.options "+
+				"SELECT o.option_id, o.description, o.price "+
+				"FROM marche_halibaba.options o "+
 				"WHERE house_id= ?"));
 		
 		preparedStmts.put("statistics", dbConnection.prepareStatement(
@@ -111,9 +111,12 @@ public class HousesApp extends App{
 				"FROM marche_halibaba.houses h "));
 		
 		preparedStmts.put("valid_estimates", dbConnection.prepareStatement(
-				"SELECT * "+
+				"SELECT h_valid_estimates_nbr "+
 				"FROM marche_halibaba.valid_estimates_nbr "+
 				"WHERE h_id= ?"));
+		
+		preparedStmts.put("modify_option", dbConnection.prepareStatement(
+				"SELECT marche_halibaba.modify_option(?,?,?,?) "));
 
 	}
 	
@@ -235,12 +238,12 @@ public class HousesApp extends App{
 
 			System.out.println("1. Lister les demandes de devis en cours");
 			System.out.println("2. Ajouter des options au catalogue d'options");
-			//TODO Modifier options
-			System.out.println("3. Statistiques");
-			System.out.println("4. Se déconnecter");
+			System.out.println("3. Modifier des options du catalogue d'options");
+			System.out.println("4. Statistiques");
+			System.out.println("5. Se déconnecter");
 			
-			System.out.println("\nQue désirez-vous faire ? (1 - 4)");
-			int choice = Utils.readAnIntegerBetween(1, 4);
+			System.out.println("\nQue désirez-vous faire ? (1 - 5)");
+			int choice = Utils.readAnIntegerBetween(1, 5);
 			
 			switch(choice) {
 			case 1:
@@ -250,9 +253,12 @@ public class HousesApp extends App{
 				addOption();
 				break;
 			case 3:
-				displayStatistics();
+				modifyOption();
 				break;
 			case 4:
+				displayStatistics();
+				break;
+			case 5:
 				isUsing = false;
 				break;
 			}
@@ -357,7 +363,7 @@ private void displayEstimateRequests() throws SQLException{
 private void submitEstimate(int estimateRequest) throws SQLException{
 	
 	System.out.println("Soumettre un devis");
-	System.out.println("------------------");
+	System.out.println("******************");
 	
 	System.out.println("Description:");
 	String description = Utils.scanner.nextLine();
@@ -365,10 +371,10 @@ private void submitEstimate(int estimateRequest) throws SQLException{
 	System.out.println("Prix du devis:");
 	double price= Utils.readADoubleBetween(0, 1000000000.0);
 	
-	System.out.println("Voulez-vous que le devis soit secret? Oui (O) - Non (N)");
+	System.out.println("Voulez-vous que le devis soit caché? Oui (O) - Non (N)");
 	boolean secret= Utils.readOorN();
 	
-	System.out.println("Voulez-vous que le devis soit hiding? Oui (O) - Non (N)");
+	System.out.println("Voulez-vous que le devis soit masquant? Oui (O) - Non (N)");
 	boolean hiding= Utils.readOorN();
 	
 	System.out.println("Voulez-vous rajouter des options ? Oui (O) - Non (N)");
@@ -379,7 +385,7 @@ private void submitEstimate(int estimateRequest) throws SQLException{
 	while(options){
 
 		System.out.println("Menu des options");
-		System.out.println("----------------");
+		System.out.println("****************");
 		System.out.println("1.Sélectionner une option existante dans le catalogue d'options");
 		System.out.println("2.Ajouter une nouvelle option au calatogue et l'utiliser pour le devis");
 		System.out.println("3.Soumettre le devis avec les options sélectionnées");
@@ -397,7 +403,7 @@ private void submitEstimate(int estimateRequest) throws SQLException{
 					
 				}else{
 					choosedOptions.add(selectedOption);
-					System.out.println("L'option a correctement été ajoutée pour le devis");
+					System.out.println("L'option a correctement été ajoutée pour le devis\n");
 				}
 			
 				break;
@@ -439,8 +445,9 @@ private void submitEstimate(int estimateRequest) throws SQLException{
 				
 		ps.executeQuery();
 		
+		System.out.println("Le devis a été soumis correctement !\n");
 		Utils.blockProgress();
-		//ps.close(); //Si je le ferme, un seul devis peut être posté par session ..
+		
 		
 	}catch(SQLException e){
 		String message= e.getMessage();
@@ -462,7 +469,8 @@ private int selectOption() throws SQLException{
 	int i = 1;
 	while(rs.next()) {
 		options.put(i, rs.getInt(1));
-		optionsStr += i + ". " + rs.getString(2) + "\n\tPrix de l'option: " + rs.getDouble(3) + "\n\n";
+		optionsStr += i + ". " + rs.getString(2) + 
+			"\n\tPrix de l'option: " + rs.getDouble(3) + "\n\n";
 		i++;
 	}
 	rs.close();
@@ -490,7 +498,7 @@ private int selectOption() throws SQLException{
 private int addOption() throws SQLException{
 	
 	System.out.println("Ajout d'une nouvelle option");
-	System.out.println("---------------------------");
+	System.out.println("***************************");
 	System.out.println("Veuillez entrer une description pour l'option");
 	String description = Utils.scanner.nextLine();
 	System.out.println("Veuillez entrer un prix pour cette option");
@@ -517,6 +525,7 @@ private int addOption() throws SQLException{
 }
 
 private void displayStatistics() throws SQLException {
+
 	System.out.println("\nStatistiques des maisons");
 	System.out.println("************************************************");
 	
@@ -538,10 +547,64 @@ private void displayStatistics() throws SQLException {
 	rs.next();
 	
 	System.out.println("\nVous avez actuellement "+
-	rs.getBigDecimal(3)+" devis en cours de soumission.");
+	rs.getBigDecimal(1)+" devis en cours de soumission.");
 	rs.close();
 	
 	Utils.blockProgress();		
+}
+
+private void modifyOption() throws SQLException{
+	
+	System.out.println("Modification d'une option");
+	System.out.println("*************************");
+	
+	HashMap<Integer, Integer> options = new HashMap<Integer, Integer>(); 
+	String optionsStr = "";
+	
+	PreparedStatement ps = preparedStmts.get("list_options");
+	ps.setInt(1, houseId);
+	ResultSet rs = ps.executeQuery();
+	
+	int i = 1;
+	while(rs.next()) {
+		options.put(i, rs.getInt(1));
+		optionsStr += i + ". " + rs.getString(2) + 
+			"\n\tPrix de l'option: " + rs.getDouble(3) + "\n\n";
+		i++;
+	}
+	rs.close();
+	
+	if(options.size() > 0){
+		System.out.println(optionsStr);
+		
+		System.out.println("Quelle option voulez-vous modifier? 1 - "+ options.size());
+		int userChoice= options.get(Utils.readAnIntegerBetween(1, options.size()));
+		
+		System.out.println("***************************");
+		System.out.println("Veuillez entrer une description pour l'option");
+		String description = Utils.scanner.nextLine();
+		
+		System.out.println("Veuillez entrer un prix pour cette option");
+		double price= Utils.readADoubleBetween(0, 1000000000.0);
+		
+		ps = preparedStmts.get("modify_option");
+		
+		ps.setString(1,description);
+		ps.setBigDecimal(2, new BigDecimal(price));
+		ps.setInt(3, userChoice);
+		ps.setInt(4, houseId);
+		
+		ps.executeQuery();
+		System.out.println("L'option a été modifiée avec succès !\n");
+		
+	}else{
+		
+		System.out.println("Vous n'avez pas encore d'options dans votre catalogue");
+		Utils.blockProgress();
+		System.out.println("\n\n");
+		
+	}
+	
 }
 
 

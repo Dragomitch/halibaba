@@ -343,17 +343,19 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-CREATE OR REPLACE FUNCTION marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER)
+CREATE OR REPLACE FUNCTION marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER)
   RETURNS INTEGER AS $$
 
 DECLARE
   arg_description ALIAS FOR $1;
   arg_price ALIAS FOR $2;
   arg_option_id ALIAS FOR $3;
+  arg_house_id ALIAS FOR $4;
 BEGIN
   UPDATE marche_halibaba.options
   SET description= arg_description, price= arg_price
-  WHERE arg_option_id= option_id;
+  WHERE arg_option_id= option_id
+    AND arg_house_id= house_id;
 RETURN arg_option_id;
 END;
 $$ LANGUAGE 'plpgsql';
@@ -723,9 +725,10 @@ TO app_houses;
 
 GRANT SELECT, UPDATE, TRIGGER
 ON marche_halibaba.estimates,
-  marche_halibaba.estimate_requests,
   marche_halibaba.estimate_options,
-  marche_halibaba.houses
+  marche_halibaba.estimate_requests,
+  marche_halibaba.houses,
+  marche_halibaba.options
 TO app_houses;
 
 GRANT EXECUTE
@@ -733,6 +736,7 @@ ON FUNCTION
 marche_halibaba.signup_house(VARCHAR(35), VARCHAR(50), VARCHAR(35)),
 marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[]),
 marche_halibaba.add_option(TEXT, NUMERIC(12,2), INTEGER),
+marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER),
 marche_halibaba.trigger_estimate_insert()
 TO app_houses;
 

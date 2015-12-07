@@ -1,5 +1,5 @@
 _ajouter valid_estimates_list ( view_all_submitted_estimates.sql ) à l'installation (dans le script d'install, comme dans le miens )
-
+_ajouter le nouveau modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER) au create :)
 
 
 _Lorsque l'on fait un enter sans rien entrer pour un Voulez-vous reessayer? Oui (O) - Non (N) (houses en tout cas)->
@@ -22,10 +22,14 @@ Felicitations! Votre demande de devis a bien ete publiee.
 
 
 
-_Bizarrerie (#Jacquerie ?): Houses_App, dans submit:
-	Si je close le statement, je peux poster qu'un devis par session ... (ligne ~444 en commentaire) (supprime le commentaire si tu approuves que ca sert à rien :D)
+_Ne pas close un preparedStatement... Sinon tu peux pas le réutiliser durant l'appli x) .. ( j'ai cru que c'était un ResultSet :'( )
 
 
 _Je suis pas sûr que le GRANT SELECT, INSERT sur marche_halibaba.estimate_options pour les maisons soit nécessaire... Tu sais vérifier ?
+	De même pour GRANT SELECT, UPDATE, TRIGGER sur marche_halibaba.estimate_options ..
 
 _Pour mes options, j'ai fait un choix unique dans la liste des options dispo ... Si tu veux faire comme ton choix d'options d'utilisateur (1 , 2 , 3 ...) libre à toi ... J'ai vraiment plus la motivation xD.
+
+_Modifier user_prod pour mon login afin de correspondre aux droits des clients ?
+
+_modification de modify_option pour contenir le house_id
