@@ -9,9 +9,13 @@ CREATE VIEW marche_halibaba.valid_estimates_list AS
          e.is_secret AS "e_is_secret",
          er.estimate_request_id AS "er_estimate_request_id",
          er.deadline AS "er_deadline",
-         er.description AS "er_description"
-  FROM marche_halibaba.estimates e, marche_halibaba.estimate_requests er
+         er.description AS "er_description",
+         h.name AS "h_name"
+  FROM marche_halibaba.estimates e, 
+    marche_halibaba.estimate_requests er,
+    marche_halibaba.houses h
   WHERE e.estimate_request_id= er.estimate_request_id
+    AND e.house_id= h.house_id
     AND er.pub_date + INTERVAL '15' day > NOW()
     AND e.is_cancelled= FALSE 
     AND er.chosen_estimate IS NULL

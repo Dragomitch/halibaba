@@ -1,0 +1,29 @@
+_ajouter valid_estimates_list ( view_all_submitted_estimates.sql ) à l'installation (dans le script d'install, comme dans le miens )
+
+
+
+_Lorsque l'on fait un enter sans rien entrer pour un Voulez-vous reessayer? Oui (O) - Non (N) (houses en tout cas)->
+Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String index out of range: 0
+	at java.lang.String.charAt(Unknown Source)
+	at marche_halibaba_houses.Utils.readOorN(Utils.java:103)
+	at marche_halibaba_houses.HousesApp.signin(HousesApp.java:145)
+	at marche_halibaba_houses.HousesApp.main(HousesApp.java:38)
+
+
+
+_Lorsque l'on ajoute une demande de devis
+Description : Une nouvelle demande
+Date souhaitee de fin des travaux (jj/mm/aaaa) : 22/33/2015
+...
+
+Felicitations! Votre demande de devis a bien ete publiee.
+-> Il faudrait limiter les entrées pour les dates (33 en mois, c'est boff, même si c'est que la date de fin de travaux)
+  Par contre si la date est inférieure, ca a l'air de refuser ( pas testé en profondeur)
+
+
+
+_Bizarrerie: Houses_App, dans submit:
+	Si je close le statement, je peux poster qu'un devis par session ... (ligne ~444 en commentaire)
+
+
+_Je suis pas sûr que le GRANT SELECT, INSERT sur marche_halibaba.estimate_options pour les maisons soit nécessaire... Tu sais vérifier ?

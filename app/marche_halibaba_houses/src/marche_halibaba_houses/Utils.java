@@ -121,5 +121,16 @@ public class Utils {
 	    }
 	    return ret;
 	}
+	
+	public static String SQLIntervalToString(String interval) {
+		String str = "";
+		
+		String days = interval.substring(0, 2).replaceAll(" ", "");
+		String hours = interval.replaceAll("[0-9]{1,2} days ", "").replaceAll("[0-9] day ", "").substring(0, 2).replaceAll(":", "");
+		
+		str = days + " jour(s) " + hours + " heure(s)";
+	
+		return str;
+	}
 
 }
