@@ -3,8 +3,6 @@ package marche_halibaba;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.Array;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,10 +22,10 @@ public class ClientsApp extends App {
 			boolean isUsing = true;
 			while(isUsing) {
 				System.out.println("\n************************************************");
-				System.out.println("* Bienvenue sur le Marche d'Halibaba - Clients *");
+				System.out.println("* Bienvenue sur le Marché d'Halibaba - Clients *");
 				System.out.println("************************************************");
 				System.out.println("1 - Se connecter");
-				System.out.println("2 - Creer un compte");
+				System.out.println("2 - Créer un compte");
 				System.out.println("3 - Quitter");
 				
 				System.out.println("\nQuel est votre choix? (1-3)");	
@@ -57,7 +55,7 @@ public class ClientsApp extends App {
 				
 			}
 			
-			System.out.println("\nMerci de votre visite. A bientot!");
+			System.out.println("\nMerci de votre visite. À bientôt!");
 			session.dbConnection.close();
 			
 		} catch(SQLException e) {
@@ -72,7 +70,8 @@ public class ClientsApp extends App {
 		
 		this.preparedStmts = new HashMap<String, PreparedStatement>();
 		
-		preparedStmts.put("signup", dbConnection.prepareStatement("SELECT marche_halibaba.signup_client(?, ?, ?, ?)"));
+		preparedStmts.put("signup", dbConnection.prepareStatement(
+				"SELECT marche_halibaba.signup_client(?, ?, ?, ?)"));
 		
 		preparedStmts.put("signin", dbConnection.prepareStatement(
 				"SELECT c_id, u_pswd " +
@@ -138,8 +137,8 @@ public class ClientsApp extends App {
 					clientId = rs.getInt(1);
 					isUsing = false;
 				} else {
-					System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est errone.");
-					System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
+					System.out.println("\nVotre nom d'utilisateur et/ou mot de passe est erroné.");
+					System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
 					
 					if(!Utils.readOorN()) {
 						isUsing = false;
@@ -194,8 +193,8 @@ public class ClientsApp extends App {
 				rs = ps.executeQuery();
 				rs.next();
 				
-				System.out.println("\nVotre compte a bien ete cree.");
-				System.out.println("Vous allez maintenant etre redirige vers la page d'accueil de l'application.");
+				System.out.println("\nVotre compte a bien été crée.");
+				System.out.println("Vous allez maintenant être redirigé vers la page d'accueil de l'application.");
 				Utils.blockProgress();
 				
 				clientId = rs.getInt(1);
@@ -205,12 +204,12 @@ public class ClientsApp extends App {
 				e.printStackTrace();
 				
 				if(e.getSQLState().equals("23505")) {
-					System.out.println("\nCe nom d'utilisateur est déjà utilise.");
+					System.out.println("\nCe nom d'utilisateur est déjà utilisé.");
 				} else {
 					System.out.println("\nLes données saisies sont incorrectes.");
 				}
 				
-				System.out.println("Voulez-vous reessayer? Oui (O) - Non (N)");
+				System.out.println("Voulez-vous réessayer? Oui (O) - Non (N)");
 				
 				if(!Utils.readOorN()) {
 					isUsing = false;
@@ -237,10 +236,10 @@ public class ClientsApp extends App {
 			System.out.println("************************************************\n");
 			
 			System.out.println("1. Consulter mes demandes de devis en cours");
-			System.out.println("2. Consulter mes demandes de devis acceptees");
+			System.out.println("2. Consulter mes demandes de devis acceptées");
 			System.out.println("3. Soumettre une demande de devis");
 			System.out.println("4. Afficher les statistiques des maisons");
-			System.out.println("5. Se deconnecter");
+			System.out.println("5. Se déconnecter");
 			
 			System.out.println("\nQue desirez-vous faire ? (1 - 5)");
 			int choice = Utils.readAnIntegerBetween(1, 5);
@@ -448,7 +447,7 @@ public class ClientsApp extends App {
 			Array chosenOptions = null;
 			
 			if(options.size() > 0) {
-				System.out.println("Voulez-vous choisir des options ?");
+				System.out.println("Voulez-vous choisir des options ? Oui (O) - Non (N)");
 				
 				if(Utils.readOorN()) {
 					System.out.println("Quels options voulez-vous choisir? (exemple: 1, 2, 3)");
@@ -473,11 +472,11 @@ public class ClientsApp extends App {
 			try {
 				rs = ps.executeQuery();
 				rs.next();
-				System.out.println("\nLe devis a bien ete accepte!");
+				System.out.println("\nLe devis a bien été accepté!");
 				Utils.blockProgress();
 				status = true;
 			} catch (SQLException e) {
-				System.out.println("Malheureusement, ce devis ne peut-etre accepte.\n");
+				System.out.println("Malheureusement, ce devis ne peut-etre accepté.\n");
 			} finally {
 				
 				if(rs != null) {
@@ -500,7 +499,7 @@ public class ClientsApp extends App {
 		while(isUsing) {
 			System.out.print("Description : ");
 			String description = Utils.scanner.nextLine();
-			System.out.print("Date souhaitee de fin des travaux (jj/mm/aaaa) : ");
+			System.out.print("Date souhaitée de fin des travaux (jj/mm/aaaa) : ");
 			Date deadline = Utils.readDate();
 			Map<String, String> constructionAddress = enterAddress();
 			
@@ -536,11 +535,11 @@ public class ClientsApp extends App {
 			
 			try {	
 				rs = ps.executeQuery();		
-				System.out.println("\nFelicitations! Votre demande de devis a bien ete publiee.");
+				System.out.println("\nFelicitations! Votre demande de devis a bien été publiée.");
 				Utils.blockProgress();
 				isUsing = false;
 			} catch (SQLException e) {
-				System.out.println("Les donnees entrees sont erronnées. Veuillez recommencer.\n");
+				System.out.println("Les donnees entrées sont erronnées. Veuillez recommencer.\n");
 			} finally {
 				
 				if(rs != null) {
@@ -562,10 +561,10 @@ public class ClientsApp extends App {
 			
 		while(rs.next()) {
 			System.out.println("\n" + rs.getString(1));
-			System.out.println("\tChiffre d'affaire: " + rs.getDouble(2) + " euros");
-			System.out.println("\tTaux d'acceptation: " + (rs.getDouble(3)*100) + " pourcent");
+			System.out.println("\tChiffre d'affaire: " + rs.getDouble(2) + " €");
+			System.out.println("\tTaux d'acceptation: " + (rs.getDouble(3)*100) + " %");
 			System.out.println("\tNombre de fois que la maison s'est fait attraper en train de tricher : " + rs.getInt(4) + " fois");
-			System.out.println("\tNombre de fois que la maison a attrape un tricheur : " + rs.getInt(5) + " fois");
+			System.out.println("\tNombre de fois que la maison a attrapé un tricheur : " + rs.getInt(5) + " fois");
 		}
 		
 		rs.close();

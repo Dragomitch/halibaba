@@ -22,8 +22,10 @@ Felicitations! Votre demande de devis a bien ete publiee.
 
 
 
-_Bizarrerie: Houses_App, dans submit:
-	Si je close le statement, je peux poster qu'un devis par session ... (ligne ~444 en commentaire)
+_Bizarrerie (#Jacquerie ?): Houses_App, dans submit:
+	Si je close le statement, je peux poster qu'un devis par session ... (ligne ~444 en commentaire) (supprime le commentaire si tu approuves que ca sert à rien :D)
 
 
 _Je suis pas sûr que le GRANT SELECT, INSERT sur marche_halibaba.estimate_options pour les maisons soit nécessaire... Tu sais vérifier ?
+
+_Pour mes options, j'ai fait un choix unique dans la liste des options dispo ... Si tu veux faire comme ton choix d'options d'utilisateur (1 , 2 , 3 ...) libre à toi ... J'ai vraiment plus la motivation xD.
