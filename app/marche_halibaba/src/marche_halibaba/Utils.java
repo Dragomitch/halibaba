@@ -32,7 +32,7 @@ public class Utils {
         		if(number>=number1 && number<=number2) {
         			isLegal = true;
         		} else {
-        			System.out.println("Le nombre doit etre compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
+        			System.out.println("Le nombre doit être compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
         		}
         		
         		
@@ -88,7 +88,7 @@ public class Utils {
 		    	int j = Integer.parseInt(strs[i]);
 		    	
 		    	if(j < number1 || j > number2) {
-		    		System.out.println("Les nombres doivent etre compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
+		    		System.out.println("Les nombres doivent être compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
 		    		isLegal = false;
 		    		break;
 		    	}

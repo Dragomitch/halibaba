@@ -14,3 +14,4 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
           er.chosen_estimate IS NULL) e
       ON h.house_id = e.e_house_id
   GROUP BY h.house_id, h.name;
+
