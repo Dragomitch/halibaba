@@ -1,4 +1,4 @@
-
+﻿
 -- Supprimer toutes les données existantes
 DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
 
@@ -343,17 +343,19 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-CREATE OR REPLACE FUNCTION marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER)
+CREATE OR REPLACE FUNCTION marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER)
   RETURNS INTEGER AS $$
 
 DECLARE
   arg_description ALIAS FOR $1;
   arg_price ALIAS FOR $2;
   arg_option_id ALIAS FOR $3;
+  arg_house_id ALIAS FOR $4;
 BEGIN
   UPDATE marche_halibaba.options
   SET description= arg_description, price= arg_price
-  WHERE arg_option_id= option_id;
+  WHERE arg_option_id= option_id
+    AND arg_house_id= house_id;
 RETURN arg_option_id;
 END;
 $$ LANGUAGE 'plpgsql';
@@ -615,6 +617,29 @@ FOR EACH ROW
 WHEN (OLD.is_chosen IS DISTINCT FROM NEW.is_chosen)
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
 
+DROP VIEW IF EXISTS marche_halibaba.valid_estimates_list;
+
+CREATE VIEW marche_halibaba.valid_estimates_list AS
+  SELECT e.estimate_id AS "e_estimate_id",
+         e.description AS "e_description",
+         e.price AS "e_price",
+         e.house_id AS "e_house_id",
+         e.submission_date AS "e_submission_date",
+         e.is_secret AS "e_is_secret",
+         er.estimate_request_id AS "er_estimate_request_id",
+         er.deadline AS "er_deadline",
+         er.description AS "er_description",
+         h.name AS "h_name"
+  FROM marche_halibaba.estimates e, 
+    marche_halibaba.estimate_requests er,
+    marche_halibaba.houses h
+  WHERE e.estimate_request_id= er.estimate_request_id
+    AND e.house_id= h.house_id
+    AND er.pub_date + INTERVAL '15' day > NOW()
+    AND e.is_cancelled= FALSE 
+    AND er.chosen_estimate IS NULL
+  ORDER BY e.estimate_id;
+
 
 /* Clients app user */
 DROP USER IF EXISTS app_clients;
@@ -666,11 +691,55 @@ GRANT ALL PRIVILEGES
 ON ALL SEQUENCES IN SCHEMA marche_halibaba
 TO app_clients;
 
-/* Clients app user */
+/* Clients app houses */
 
 DROP USER IF EXISTS app_houses;
 
 CREATE USER app_houses
 ENCRYPTED PASSWORD '2S5jn12JndG68hT';
 
+GRANT CONNECT
+ON DATABASE projet
+TO app_houses;
 
+GRANT USAGE
+ON SCHEMA marche_halibaba
+TO app_houses;
+
+GRANT SELECT 
+ON marche_halibaba.signin_users,
+  marche_halibaba.list_estimate_requests,
+  marche_halibaba.valid_estimates_list,
+  marche_halibaba.houses,
+  marche_halibaba.options,
+  marche_halibaba.valid_estimates_nbr
+TO app_houses;
+
+GRANT SELECT, INSERT
+ON marche_halibaba.users,
+  marche_halibaba.houses,
+  marche_halibaba.estimate_options,
+  marche_halibaba.estimates,
+  marche_halibaba.options
+TO app_houses;
+
+GRANT SELECT, UPDATE, TRIGGER
+ON marche_halibaba.estimates,
+  marche_halibaba.estimate_options,
+  marche_halibaba.estimate_requests,
+  marche_halibaba.houses,
+  marche_halibaba.options
+TO app_houses;
+
+GRANT EXECUTE
+ON FUNCTION 
+marche_halibaba.signup_house(VARCHAR(35), VARCHAR(50), VARCHAR(35)),
+marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[]),
+marche_halibaba.add_option(TEXT, NUMERIC(12,2), INTEGER),
+marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER),
+marche_halibaba.trigger_estimate_insert()
+TO app_houses;
+
+GRANT ALL PRIVILEGES
+ON ALL SEQUENCES IN SCHEMA marche_halibaba
+TO app_houses;
