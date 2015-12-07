@@ -17,7 +17,7 @@ public class ClientsApp extends App {
 	public static void main(String[] args) {
 						
 		try {
-			ClientsApp session = new ClientsApp("app_clients", "2S5jn12JndG68hT");
+			ClientsApp session = new ClientsApp("jwagema15", "f6U3YBC");
 			
 			boolean isUsing = true;
 			while(isUsing) {

@@ -21,10 +21,10 @@ public abstract class App {
 		}
 		
 		// Dev
-		String url = "jdbc:postgresql://localhost:5432/projet?user=" + dbUser + "&password=" + dbPswd;
+		//String url = "jdbc:postgresql://localhost:5432/projet?user=" + dbUser + "&password=" + dbPswd;
 		
 		// Prod
-		//String url = "jdbc:postgresql://localhost:5432/projet?user=app&password=2S5jn12JndG68hT";
+		String url = "jdbc:postgresql://172.24.2.6:5432/jwagema15?user=" + dbUser + "&password=" + dbPswd;
 		
 		try {
 			this.dbConnection = DriverManager.getConnection(url);

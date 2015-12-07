@@ -18,7 +18,8 @@ public class HousesApp extends App{
 		
 		try{
 			
-			HousesApp session = new HousesApp("app_houses", "2S5jn12JndG68hT");
+			//HousesApp session = new HousesApp("app_houses", "2S5jn12JndG68hT");
+			HousesApp session = new HousesApp("pdragom15", "N89UeAr");
 			
 			boolean isUsing = true;
 			while(isUsing) {

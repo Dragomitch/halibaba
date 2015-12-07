@@ -26,4 +26,4 @@ CREATE VIEW marche_halibaba.valid_estimates_list AS
     AND er.pub_date + INTERVAL '15' day > NOW()
     AND e.is_cancelled = FALSE
     AND er.chosen_estimate IS NULL
-  ORDER BY e.pub_date DESC;
+  ORDER BY e.submission_date DESC;

@@ -21,7 +21,7 @@ scripts+=('src/view_all_submitted_estimates.sql')
 scripts+=('src/triggers_estimate_insert.sql')
 scripts+=('src/triggers_estimate_requests_update.sql')
 scripts+=('src/triggers_options_update.sql')
-scripts+=('src/users_dev.sql')
+scripts+=('src/users_prod.sql')
 
 for script in ${scripts[*]} ; do
 
