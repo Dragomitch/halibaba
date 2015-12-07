@@ -1,3 +1,5 @@
+-- Trigger sur l'acceptation d'une option
+
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_options_update()
   RETURNS TRIGGER AS $$
 

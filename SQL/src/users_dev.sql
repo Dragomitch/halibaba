@@ -1,4 +1,6 @@
-/* Clients app user */
+-- Utilisateurs
+
+-- Création de l'utilisateur pour l'interface client
 DROP USER IF EXISTS app_clients;
 
 CREATE USER app_clients
@@ -48,8 +50,7 @@ GRANT ALL PRIVILEGES
 ON ALL SEQUENCES IN SCHEMA marche_halibaba
 TO app_clients;
 
-/* Clients app houses */
-
+-- Création de l'utilisateur pour l'interface maison
 DROP USER IF EXISTS app_houses;
 
 CREATE USER app_houses
@@ -63,7 +64,7 @@ GRANT USAGE
 ON SCHEMA marche_halibaba
 TO app_houses;
 
-GRANT SELECT 
+GRANT SELECT
 ON marche_halibaba.signin_users,
   marche_halibaba.list_estimate_requests,
   marche_halibaba.valid_estimates_list,
@@ -89,7 +90,7 @@ ON marche_halibaba.estimates,
 TO app_houses;
 
 GRANT EXECUTE
-ON FUNCTION 
+ON FUNCTION
 marche_halibaba.signup_house(VARCHAR(35), VARCHAR(50), VARCHAR(35)),
 marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[]),
 marche_halibaba.add_option(TEXT, NUMERIC(12,2), INTEGER),

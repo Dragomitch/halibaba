@@ -1,3 +1,5 @@
+-- Trigger sur l'insertion de devis
+
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_insert()
   RETURNS TRIGGER AS $$
 
@@ -64,7 +66,7 @@ BEGIN
         AND submission_date >= NOW() - INTERVAL '1' day;
 
       NEW.is_hiding:=FALSE;
-      NEW.is_secret:=FALSE; --Justifier dans le rapport que si on ne set pas secret à false, on ne pourrait pas poster, juste après celui-ci, un devis secret & hiding  mais seulement hiding. Et qu'ainsi on a réellement un devis normal soumis.
+      NEW.is_secret:=FALSE;
 
     ELSE
       UPDATE marche_halibaba.houses

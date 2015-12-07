@@ -3,8 +3,10 @@ package marche_halibaba;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.InputMismatchException;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -47,6 +49,33 @@ public class Utils {
         return number;
 	}
 	
+	public static double readADoubleBetween(double number1, double number2){
+		double number = 0;
+		
+		boolean isLegal = false;
+		while(!isLegal){
+			
+			try{
+				number= scanner.nextDouble();
+				
+				if(number >= number1 && number<= number2){
+					isLegal = true;
+				}else{
+        			System.out.println("Le nombre doit être compris entre " + number1 + " et " + number2 + ". Veuillez recommencer.");
+				}
+				
+				
+			}catch(InputMismatchException e){
+        		System.out.println("Vous ne pouvez entrer que des chiffres. Veuillez recommencer.");
+			} finally{
+				scanner.nextLine();
+			}
+			
+		}
+		
+		return number;
+	}
+	
 	public static Date readDate() {
 		Date date = null;
 		
@@ -67,7 +96,7 @@ public class Utils {
 				
 		return date;
 	}
-	
+		
 	public static int[] readIntegersBetween(int number1, int number2) {
 		int[] integers = null;
 		
@@ -112,16 +141,36 @@ public class Utils {
 		return str;
 	}
 	
+	
 	public static boolean readOorN(){
-		char response = scanner.nextLine().charAt(0);
+		String str = scanner.nextLine();
+		char response = 'z';
+		
+		if(str.length() == 1) {
+			response = str.charAt(0);
+		}
 		
 		while (response != 'O' && response != 'o' &&
 				response != 'N' && response != 'n'){
 			System.out.println("Veuillez répondre O (oui) ou N (non).");
-			response = scanner.nextLine().charAt(0);
+			str = scanner.nextLine();
+			
+			if(str.length() == 1) {
+				response = str.charAt(0);
+			}
+			
 		}
 		
 		return response == 'O' || response == 'o';
 	}
 
+	public static int[] convertIntegers(ArrayList<Integer> integers) {
+	    int[] ret = new int[integers.size()];
+	    Iterator<Integer> iterator = integers.iterator();
+	    for (int i = 0; i < ret.length; i++)
+	    {
+	        ret[i] = iterator.next().intValue();
+	    }
+	    return ret;
+	}
 }

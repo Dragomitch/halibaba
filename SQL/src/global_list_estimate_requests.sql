@@ -1,3 +1,4 @@
+-- Afficher les demandes de devis
 DROP VIEW IF EXISTS marche_halibaba.list_estimate_requests;
 
 CREATE VIEW marche_halibaba.list_estimate_requests AS

@@ -1,4 +1,4 @@
--- Afficher les demandes de devis
+-- Afficher les détails d'un devis
 
 DROP VIEW IF EXISTS marche_halibaba.estimate_details;
 

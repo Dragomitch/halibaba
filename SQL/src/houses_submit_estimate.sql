@@ -1,3 +1,5 @@
+-- Soumettre un devis
+
 CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[])
   RETURNS INTEGER AS $$
 

@@ -1,3 +1,5 @@
+-- Enregistrer une maison
+
 CREATE OR REPLACE FUNCTION marche_halibaba.signup_house(VARCHAR(35), VARCHAR(50), VARCHAR(35))
   RETURNS INTEGER AS $$
 DECLARE

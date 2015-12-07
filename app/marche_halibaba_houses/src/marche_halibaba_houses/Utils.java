@@ -100,12 +100,22 @@ public class Utils {
 	}
 	
 	public static boolean readOorN(){
-		char response = scanner.nextLine().charAt(0);
+		String str = scanner.nextLine();
+		char response = 'z';
+		
+		if(str.length() == 1) {
+			response = str.charAt(0);
+		}
 		
 		while (response != 'O' && response != 'o' &&
 				response != 'N' && response != 'n'){
 			System.out.println("Veuillez répondre O (oui) ou N (non).");
-			response = scanner.nextLine().charAt(0);
+			str = scanner.nextLine();
+			
+			if(str.length() == 1) {
+				response = str.charAt(0);
+			}
+			
 		}
 		
 		return response == 'O' || response == 'o';

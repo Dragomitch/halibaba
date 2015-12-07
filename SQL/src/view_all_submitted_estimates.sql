@@ -1,3 +1,10 @@
+-- Afficher les devis en cours de soumission par les maisons
+-- Exemple d'exécution:
+-- SELECT *
+-- FROM marche_halibaba.valid_estimates_list
+-- WHERE er_estimate_request_id = ? AND
+--  (e_is_secret= FALSE OR (e_is_secret = TRUE AND e_house_id= ?));
+
 DROP VIEW IF EXISTS marche_halibaba.valid_estimates_list;
 
 CREATE VIEW marche_halibaba.valid_estimates_list AS
@@ -11,12 +18,12 @@ CREATE VIEW marche_halibaba.valid_estimates_list AS
          er.deadline AS "er_deadline",
          er.description AS "er_description",
          h.name AS "h_name"
-  FROM marche_halibaba.estimates e, 
+  FROM marche_halibaba.estimates e,
     marche_halibaba.estimate_requests er,
     marche_halibaba.houses h
   WHERE e.estimate_request_id= er.estimate_request_id
-    AND e.house_id= h.house_id
+    AND e.house_id = h.house_id
     AND er.pub_date + INTERVAL '15' day > NOW()
-    AND e.is_cancelled= FALSE 
+    AND e.is_cancelled = FALSE
     AND er.chosen_estimate IS NULL
-  ORDER BY e.estimate_id;
+  ORDER BY e.pub_date DESC;

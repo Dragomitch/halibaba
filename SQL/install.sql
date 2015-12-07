@@ -1,4 +1,4 @@
-﻿
+
 -- Supprimer toutes les données existantes
 DROP SCHEMA IF EXISTS marche_halibaba CASCADE;
 
@@ -101,6 +101,8 @@ CREATE TABLE marche_halibaba.estimate_options (
 );
 
 
+-- Afficher les utilisateurs
+
 DROP VIEW IF EXISTS marche_halibaba.signin_users;
 
 CREATE VIEW marche_halibaba.signin_users AS
@@ -114,7 +116,7 @@ CREATE VIEW marche_halibaba.signin_users AS
       ON u.user_id = h.user_id;
 
 
--- Afficher les demandes de devis
+-- Afficher les détails d'un devis
 
 DROP VIEW IF EXISTS marche_halibaba.estimate_details;
 
@@ -134,6 +136,7 @@ CREATE VIEW marche_halibaba.estimate_details AS
   WHERE e.house_id = h.house_id;
 
 
+-- Afficher les demandes de devis
 DROP VIEW IF EXISTS marche_halibaba.list_estimate_requests;
 
 CREATE VIEW marche_halibaba.list_estimate_requests AS
@@ -324,6 +327,8 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
+-- Enregistrer une maison
+
 CREATE OR REPLACE FUNCTION marche_halibaba.signup_house(VARCHAR(35), VARCHAR(50), VARCHAR(35))
   RETURNS INTEGER AS $$
 DECLARE
@@ -343,6 +348,8 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
+-- Modifier une option
+
 CREATE OR REPLACE FUNCTION marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER)
   RETURNS INTEGER AS $$
 
@@ -355,12 +362,14 @@ BEGIN
   UPDATE marche_halibaba.options
   SET description= arg_description, price= arg_price
   WHERE arg_option_id= option_id
-    AND arg_house_id= house_id;
+  	AND arg_house_id= house_id;
 RETURN arg_option_id;
 END;
 $$ LANGUAGE 'plpgsql';
 
---Procedure
+
+-- Ajouter une option
+
 CREATE OR REPLACE FUNCTION marche_halibaba.add_option(TEXT, NUMERIC(12,2), INTEGER)
   RETURNS INTEGER AS $$
 
@@ -370,11 +379,14 @@ DECLARE
   arg_house_id ALIAS FOR $3;
   new_option_id INTEGER;
 BEGIN
-  INSERT INTO marche_halibaba.options(description, price, house_id) 
+  INSERT INTO marche_halibaba.options(description, price, house_id)
   VALUES (arg_description, arg_price, arg_house_id) RETURNING option_id INTO new_option_id;
   RETURN new_option_id;
 END;
 $$ LANGUAGE 'plpgsql';
+
+
+-- Afficher le nombre de soumissions en cours par maison
 
 DROP VIEW IF EXISTS marche_halibaba.valid_estimates_nbr;
 
@@ -393,6 +405,8 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
       ON h.house_id = e.e_house_id
   GROUP BY h.house_id, h.name;
 
+
+-- Soumettre un devis
 
 CREATE OR REPLACE FUNCTION marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[])
   RETURNS INTEGER AS $$
@@ -434,6 +448,39 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
+
+-- Afficher les devis en cours de soumission par les maisons
+-- Exemple d'exécution:
+-- SELECT *
+-- FROM marche_halibaba.valid_estimates_list
+-- WHERE er_estimate_request_id = ? AND
+--  (e_is_secret= FALSE OR (e_is_secret = TRUE AND e_house_id= ?));
+
+DROP VIEW IF EXISTS marche_halibaba.valid_estimates_list;
+
+CREATE VIEW marche_halibaba.valid_estimates_list AS
+  SELECT e.estimate_id AS "e_estimate_id",
+         e.description AS "e_description",
+         e.price AS "e_price",
+         e.house_id AS "e_house_id",
+         e.submission_date AS "e_submission_date",
+         e.is_secret AS "e_is_secret",
+         er.estimate_request_id AS "er_estimate_request_id",
+         er.deadline AS "er_deadline",
+         er.description AS "er_description",
+         h.name AS "h_name"
+  FROM marche_halibaba.estimates e,
+    marche_halibaba.estimate_requests er,
+    marche_halibaba.houses h
+  WHERE e.estimate_request_id= er.estimate_request_id
+    AND e.house_id = h.house_id
+    AND er.pub_date + INTERVAL '15' day > NOW()
+    AND e.is_cancelled = FALSE
+    AND er.chosen_estimate IS NULL
+  ORDER BY e.pub_date DESC;
+
+
+-- Trigger sur l'insertion de devis
 
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_insert()
   RETURNS TRIGGER AS $$
@@ -501,7 +548,7 @@ BEGIN
         AND submission_date >= NOW() - INTERVAL '1' day;
 
       NEW.is_hiding:=FALSE;
-      NEW.is_secret:=FALSE; --Justifier dans le rapport que si on ne set pas secret à false, on ne pourrait pas poster, juste après celui-ci, un devis secret & hiding  mais seulement hiding. Et qu'ainsi on a réellement un devis normal soumis.
+      NEW.is_secret:=FALSE;
 
     ELSE
       UPDATE marche_halibaba.houses
@@ -531,6 +578,8 @@ BEFORE INSERT ON marche_halibaba.estimates
 FOR EACH ROW
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_insert();
 
+
+-- Trigger sur l'insertion de demande de devis
 
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_requests_update()
   RETURNS TRIGGER AS $$
@@ -587,6 +636,8 @@ FOR EACH ROW
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_requests_update();
 
 
+-- Trigger sur l'acceptation d'une option
+
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_options_update()
   RETURNS TRIGGER AS $$
 
@@ -617,31 +668,10 @@ FOR EACH ROW
 WHEN (OLD.is_chosen IS DISTINCT FROM NEW.is_chosen)
 EXECUTE PROCEDURE marche_halibaba.trigger_estimate_options_update();
 
-DROP VIEW IF EXISTS marche_halibaba.valid_estimates_list;
 
-CREATE VIEW marche_halibaba.valid_estimates_list AS
-  SELECT e.estimate_id AS "e_estimate_id",
-         e.description AS "e_description",
-         e.price AS "e_price",
-         e.house_id AS "e_house_id",
-         e.submission_date AS "e_submission_date",
-         e.is_secret AS "e_is_secret",
-         er.estimate_request_id AS "er_estimate_request_id",
-         er.deadline AS "er_deadline",
-         er.description AS "er_description",
-         h.name AS "h_name"
-  FROM marche_halibaba.estimates e, 
-    marche_halibaba.estimate_requests er,
-    marche_halibaba.houses h
-  WHERE e.estimate_request_id= er.estimate_request_id
-    AND e.house_id= h.house_id
-    AND er.pub_date + INTERVAL '15' day > NOW()
-    AND e.is_cancelled= FALSE 
-    AND er.chosen_estimate IS NULL
-  ORDER BY e.estimate_id;
+-- Utilisateurs
 
-
-/* Clients app user */
+-- Création de l'utilisateur pour l'interface client
 DROP USER IF EXISTS app_clients;
 
 CREATE USER app_clients
@@ -675,7 +705,7 @@ TO app_clients;
 GRANT SELECT, UPDATE, TRIGGER
 ON marche_halibaba.estimate_requests,
   marche_halibaba.estimate_options,
-  marche_halibaba.houses
+  marche_halibaba.houses,
 TO app_clients;
 
 GRANT EXECUTE
@@ -691,8 +721,7 @@ GRANT ALL PRIVILEGES
 ON ALL SEQUENCES IN SCHEMA marche_halibaba
 TO app_clients;
 
-/* Clients app houses */
-
+-- Création de l'utilisateur pour l'interface maison
 DROP USER IF EXISTS app_houses;
 
 CREATE USER app_houses
@@ -706,7 +735,7 @@ GRANT USAGE
 ON SCHEMA marche_halibaba
 TO app_houses;
 
-GRANT SELECT 
+GRANT SELECT
 ON marche_halibaba.signin_users,
   marche_halibaba.list_estimate_requests,
   marche_halibaba.valid_estimates_list,
@@ -732,7 +761,7 @@ ON marche_halibaba.estimates,
 TO app_houses;
 
 GRANT EXECUTE
-ON FUNCTION 
+ON FUNCTION
 marche_halibaba.signup_house(VARCHAR(35), VARCHAR(50), VARCHAR(35)),
 marche_halibaba.submit_estimate(TEXT, NUMERIC(12,2), BOOLEAN, BOOLEAN, INTEGER, INTEGER, INTEGER[]),
 marche_halibaba.add_option(TEXT, NUMERIC(12,2), INTEGER),
@@ -743,3 +772,5 @@ TO app_houses;
 GRANT ALL PRIVILEGES
 ON ALL SEQUENCES IN SCHEMA marche_halibaba
 TO app_houses;
+
+

@@ -1,3 +1,5 @@
+-- Afficher le nombre de soumissions en cours par maison
+
 DROP VIEW IF EXISTS marche_halibaba.valid_estimates_nbr;
 
 CREATE VIEW marche_halibaba.valid_estimates_nbr AS
@@ -14,4 +16,3 @@ CREATE VIEW marche_halibaba.valid_estimates_nbr AS
           er.chosen_estimate IS NULL) e
       ON h.house_id = e.e_house_id
   GROUP BY h.house_id, h.name;
-

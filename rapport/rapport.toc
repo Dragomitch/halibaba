@@ -1,15 +1,17 @@
 \select@language {french}
-\contentsline {chapter}{Table des mati\`eres}{1}
-\contentsline {chapter}{\numberline {1}Introduction}{2}
-\contentsline {chapter}{\numberline {2}blublu}{3}
-\contentsline {chapter}{\numberline {3}Persistance des donn\IeC {\'e}es}{4}
-\contentsline {chapter}{\numberline {4}Base de donn\IeC {\'e}es}{5}
-\contentsline {section}{\numberline {4.1}Script d'installation}{5}
-\contentsline {section}{\numberline {4.2}Script d'insertion de donn\IeC {\'e}es valides}{18}
-\contentsline {section}{\numberline {4.3}Script d'insertion de donn\IeC {\'e}es invalides}{19}
-\contentsline {chapter}{\numberline {5}Application java}{21}
-\contentsline {section}{\numberline {5.1}App.java}{21}
-\contentsline {section}{\numberline {5.2}ClientsApp.java}{22}
-\contentsline {section}{\numberline {5.3}HousesApp.java}{33}
-\contentsline {section}{\numberline {5.4}Utils.java}{38}
-\contentsline {chapter}{\numberline {6}Conclusion}{41}
+\contentsline {chapter}{Table des mati\`eres}{1}{Doc-Start}
+\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.1}
+\contentsline {chapter}{\numberline {2}Pr\IeC {\'e}sentation de la solution}{3}{chapter.2}
+\contentsline {section}{\numberline {2.1}Clarification de l'interpr\IeC {\'e}tation de l'\IeC {\'e}nonc\IeC {\'e}}{3}{section.2.1}
+\contentsline {section}{\numberline {2.2}Structure de la base de donn\IeC {\'e}es}{4}{section.2.2}
+\contentsline {chapter}{\numberline {3}Base de donn\IeC {\'e}es}{6}{chapter.3}
+\contentsline {section}{\numberline {3.1}Script d'installation}{6}{section.3.1}
+\contentsline {section}{\numberline {3.2}Script d'insertion de donn\IeC {\'e}es valides}{20}{section.3.2}
+\contentsline {section}{\numberline {3.3}Script d'insertion de donn\IeC {\'e}es invalides}{21}{section.3.3}
+\contentsline {chapter}{\numberline {4}Application java}{23}{chapter.4}
+\contentsline {section}{\numberline {4.1}App.java}{23}{section.4.1}
+\contentsline {section}{\numberline {4.2}ClientsApp.java}{24}{section.4.2}
+\contentsline {section}{\numberline {4.3}HousesApp.java}{35}{section.4.3}
+\contentsline {section}{\numberline {4.4}Utils.java}{46}{section.4.4}
+\contentsline {section}{\numberline {4.5}PasswordHash.java}{50}{section.4.5}
+\contentsline {chapter}{\numberline {5}Conclusion}{53}{chapter.5}

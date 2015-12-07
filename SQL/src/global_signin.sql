@@ -1,3 +1,5 @@
+-- Afficher les utilisateurs
+
 DROP VIEW IF EXISTS marche_halibaba.signin_users;
 
 CREATE VIEW marche_halibaba.signin_users AS

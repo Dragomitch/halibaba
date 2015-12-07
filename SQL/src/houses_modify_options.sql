@@ -1,3 +1,5 @@
+-- Modifier une option
+
 CREATE OR REPLACE FUNCTION marche_halibaba.modify_option(TEXT, NUMERIC(12,2), INTEGER, INTEGER)
   RETURNS INTEGER AS $$
 

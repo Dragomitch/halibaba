@@ -84,8 +84,8 @@ public class HousesApp extends App{
 				"SELECT e_description, e_price, e_submission_date, "+
 						"er_estimate_request_id,  h_name "+
 				"FROM marche_halibaba.valid_estimates_list "+
-				"WHERE ?= e_house_id AND "+
-				"(e_is_secret= FALSE OR (e_is_secret= TRUE AND e_house_id= ?))"));
+				"WHERE e_house_id = ? AND "+
+				"(e_is_secret= FALSE OR (e_is_secret = TRUE AND e_house_id= ?))"));
 		
 		preparedStmts.put("estimateRequests", dbConnection.prepareStatement(
 				"SELECT er_id, er_description, remaining_days " +

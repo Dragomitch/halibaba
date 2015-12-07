@@ -1,3 +1,5 @@
+-- Trigger sur l'insertion de demande de devis
+
 CREATE OR REPLACE FUNCTION marche_halibaba.trigger_estimate_requests_update()
   RETURNS TRIGGER AS $$
 
