@@ -70,7 +70,8 @@ ON marche_halibaba.signin_users,
   marche_halibaba.valid_estimates_list,
   marche_halibaba.houses,
   marche_halibaba.options,
-  marche_halibaba.valid_estimates_nbr
+  marche_halibaba.valid_estimates_nbr,
+  marche_halibaba.estimate_details
 TO app_houses;
 
 GRANT SELECT, INSERT

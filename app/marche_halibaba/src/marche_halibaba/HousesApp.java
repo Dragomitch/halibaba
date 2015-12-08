@@ -83,9 +83,9 @@ public class HousesApp extends App{
 
 		preparedStmts.put("estimates", dbConnection.prepareStatement(
 				"SELECT e_description, e_price, e_submission_date, "+
-						"er_estimate_request_id,  h_name "+
+						"er_estimate_request_id,  h_name, e_estimate_id "+
 				"FROM marche_halibaba.valid_estimates_list "+
-				"WHERE er_estimate_request_id = ? AND "+
+				"WHERE e_house_id = ? AND "+
 				"(e_is_secret= FALSE OR (e_is_secret = TRUE AND e_house_id= ?))"));
 		
 		preparedStmts.put("estimateRequests", dbConnection.prepareStatement(
@@ -105,6 +105,11 @@ public class HousesApp extends App{
 				"SELECT o.option_id, o.description, o.price "+
 				"FROM marche_halibaba.options o "+
 				"WHERE house_id= ?"));
+		
+		preparedStmts.put("estimate_options", dbConnection.prepareStatement(
+				"SELECT e_option_description, e_option_price " +
+				"FROM marche_halibaba.estimate_details " +
+				"WHERE e_id = ?"));
 		
 		preparedStmts.put("statistics", dbConnection.prepareStatement(
 				"SELECT h.name, h.turnover, h.acceptance_rate, " + 
@@ -231,7 +236,7 @@ public class HousesApp extends App{
 	}
 	
 	private void menu() throws SQLException{
-				
+		
 		boolean isUsing = true;
 		while(isUsing) {
 			System.out.println("\nMenu");
@@ -240,8 +245,9 @@ public class HousesApp extends App{
 			System.out.println("1. Lister les demandes de devis en cours");
 			System.out.println("2. Ajouter des options au catalogue d'options");
 			System.out.println("3. Modifier des options du catalogue d'options");
-			System.out.println("4. Statistiques");
-			System.out.println("5. Se déconnecter");
+			System.out.println("4. Lister les options présentes dans votre catalogue");
+			System.out.println("5. Statistiques");
+			System.out.println("6. Se déconnecter");
 			
 			System.out.println("\nQue désirez-vous faire ? (1 - 5)");
 			int choice = Utils.readAnIntegerBetween(1, 5);
@@ -257,9 +263,13 @@ public class HousesApp extends App{
 				modifyOption();
 				break;
 			case 4:
-				displayStatistics();
+				listOptions();
 				break;
 			case 5:
+				displayStatistics();
+				break;
+
+			case 6:
 				isUsing = false;
 				break;
 			}
@@ -276,19 +286,38 @@ private void displayEstimatesForRequest(int requestId) throws SQLException {
 	
 
 	PreparedStatement ps = preparedStmts.get("estimates");
-	ps.setInt(1, requestId);
+	ps.setInt(1, houseId);
 	ps.setInt(2, houseId);
 	ResultSet rs = ps.executeQuery();
+	
+	PreparedStatement psOptions= preparedStmts.get("estimate_options");
+	
 	
 	int j=  1;
 	while(rs.next()) {
 		if(rs.getInt(4)== requestId){
 			estimates.put(j, rs.getInt(4));
+			
+			int i= 1;
+			psOptions.setInt(1, rs.getInt(6));
+			ResultSet rsOptions= psOptions.executeQuery();
+			String optionsStr= "";
+			while(rsOptions.next()){
+				optionsStr+= "\t\t" + i +". " + rsOptions.getString(1) +
+					"\n\t\t\t" + rsOptions.getDouble(2)+ "€\n\n";
+				i++;
+			}
+			rsOptions.close();
+			
+			
 			estimateStr += j+ ". "+ rs.getString(1) + 
 					"\n\tPrix: " + rs.getDouble(2) +
 				"\n\tSoumis le : "+rs.getDate(3)+
-				"\n\tDevis soumis par la maison: "+rs.getString(5)+"\n\n";
+				"\n\tDevis soumis par la maison: "+rs.getString(5)+
+				"\n\tOptions proposées pour ce devis:\n\n"+
+				optionsStr+"\n\n";
 			j++;
+			
 		}
 		
 	}
@@ -581,7 +610,6 @@ private void modifyOption() throws SQLException{
 		System.out.println("Quelle option voulez-vous modifier? 1 - "+ options.size());
 		int userChoice= options.get(Utils.readAnIntegerBetween(1, options.size()));
 		
-		System.out.println("\nModification de l'option");
 		System.out.println("***************************");
 		System.out.println("Veuillez entrer une description pour l'option");
 		String description = Utils.scanner.nextLine();
@@ -607,6 +635,31 @@ private void modifyOption() throws SQLException{
 		
 	}
 	
+}
+
+private String listOptions() throws SQLException{
+	System.out.println("Liste de vos options");
+	System.out.println("*************************");
+	
+	String optionsStr = "";
+	
+	PreparedStatement ps = preparedStmts.get("list_options");
+	ps.setInt(1, houseId);
+	ResultSet rs = ps.executeQuery();
+	
+	int i = 1;
+	while(rs.next()) {
+		optionsStr += i + ". " + rs.getString(2) + 
+			"\n\tPrix de l'option: " + rs.getDouble(3) +" €"+ "\n\n";
+		i++;
+	}
+	rs.close();
+	
+	System.out.println(optionsStr);
+	
+	Utils.blockProgress();
+	
+	return optionsStr;
 }
 
 
