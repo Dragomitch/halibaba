@@ -57,7 +57,7 @@ public class HousesApp extends App{
 				
 			}
 		
-			System.out.println("\nMerci de votre visite.À bientôt!");
+			System.out.println("\nMerci de votre visite. À bientôt!");
 			session.dbConnection.close();
 			
 		} catch(SQLException e) {
@@ -85,14 +85,23 @@ public class HousesApp extends App{
 				"SELECT e_description, e_price, e_submission_date, "+
 						"er_estimate_request_id,  h_name, e_estimate_id "+
 				"FROM marche_halibaba.valid_estimates_list "+
-				"WHERE e_house_id = ? AND "+
+				"WHERE er_estimate_request_id= ? AND "+
 				"(e_is_secret= FALSE OR (e_is_secret = TRUE AND e_house_id= ?))"));
 		
 		preparedStmts.put("estimateRequests", dbConnection.prepareStatement(
-				"SELECT er_id, er_description, remaining_days " +
+				"SELECT er_id, er_description, remaining_days, er_deadline, " +
+				"er_construction_street_nbr, er_construction_street_name, er_construction_zip_code, er_construction_city, " +
+				"er_invoicing_street_nbr, er_invoicing_street_name, er_invoicing_zip_code, er_invoicing_city, c_last_name, c_first_name " +
 				"FROM marche_halibaba.list_estimate_requests " +
 				"WHERE er_pub_date + INTERVAL '15' day >= NOW() AND " +
 				"er_chosen_estimate IS NULL "));
+		
+		preparedStmts.put("estimateRequest", dbConnection.prepareStatement(
+				"SELECT er_id, er_description, remaining_days, er_deadline, " +
+				"er_construction_street_nbr, er_construction_street_name, er_construction_zip_code, er_construction_city, " +
+				"er_invoicing_street_nbr, er_invoicing_street_name, er_invoicing_zip_code, er_invoicing_city, c_last_name, c_first_name " +
+				"FROM marche_halibaba.list_estimate_requests " +
+				"WHERE er_id = ?"));
 		
 		preparedStmts.put("submit_estimate", dbConnection.prepareStatement(
 				"SELECT marche_halibaba.submit_estimate(?, ?, ?, ?, ?, ?, ?)"
@@ -249,8 +258,8 @@ public class HousesApp extends App{
 			System.out.println("5. Statistiques");
 			System.out.println("6. Se déconnecter");
 			
-			System.out.println("\nQue désirez-vous faire ? (1 - 5)");
-			int choice = Utils.readAnIntegerBetween(1, 5);
+			System.out.println("\nQue désirez-vous faire ? (1 - 6)");
+			int choice = Utils.readAnIntegerBetween(1, 6);
 			
 			switch(choice) {
 			case 1:
@@ -280,13 +289,33 @@ public class HousesApp extends App{
 
 
 private void displayEstimatesForRequest(int requestId) throws SQLException {
-
+	PreparedStatement psEstimateRequest = preparedStmts.get("estimateRequest");
+	psEstimateRequest.setInt(1, requestId);
+	ResultSet rsEstimateRequest = psEstimateRequest.executeQuery();
+	rsEstimateRequest.next();
+	
+	System.out.println(rsEstimateRequest.getString(2));
+	System.out.println("Date de fin souhaitée: " + rsEstimateRequest.getDate(4));
+	System.out.println("Soumis par: " + rsEstimateRequest.getString(13) + " " + rsEstimateRequest.getString(14));
+	System.out.println("\nAdresse des travaux: ");
+	System.out.println("\t" + rsEstimateRequest.getString(6) + " " + rsEstimateRequest.getString(5));
+	System.out.println("\t" + rsEstimateRequest.getString(7) + " " + rsEstimateRequest.getString(8));
+	
+	if(rsEstimateRequest.getString(9) != null) { 
+		System.out.println("\nAdresse de facturation: ");
+		System.out.println("\t" + rsEstimateRequest.getString(10) + " " + rsEstimateRequest.getString(9));
+		System.out.println("\t" + rsEstimateRequest.getString(11) + " " + rsEstimateRequest.getString(12) + "\n");
+	}
+	
+	rsEstimateRequest.close();
+	
+	
 	HashMap<Integer, Integer> estimates = new HashMap<Integer, Integer>(); 
 	String estimateStr = "";
 	
 
 	PreparedStatement ps = preparedStmts.get("estimates");
-	ps.setInt(1, houseId);
+	ps.setInt(1, requestId);
 	ps.setInt(2, houseId);
 	ResultSet rs = ps.executeQuery();
 	
@@ -302,19 +331,24 @@ private void displayEstimatesForRequest(int requestId) throws SQLException {
 			psOptions.setInt(1, rs.getInt(6));
 			ResultSet rsOptions= psOptions.executeQuery();
 			String optionsStr= "";
-			while(rsOptions.next()){
-				optionsStr+= "\t\t" + i +". " + rsOptions.getString(1) +
-					"\n\t\t\t" + rsOptions.getDouble(2)+ "€\n\n";
-				i++;
-			}
-			rsOptions.close();
 			
+			rsOptions.next();
+			
+			if(rsOptions.getString(1) != null) {
+				optionsStr += "\n\tOptions proposées pour ce devis:\n\n";
+				
+				do {
+					optionsStr+= "\t\t" + i +". " + rsOptions.getString(1) +
+						"\n\t\t\t" + rsOptions.getDouble(2)+ "€\n\n";
+					i++;
+				} while(rsOptions.next());
+				
+			}
 			
 			estimateStr += j+ ". "+ rs.getString(1) + 
 					"\n\tPrix: " + rs.getDouble(2) +
 				"\n\tSoumis le : "+rs.getDate(3)+
 				"\n\tDevis soumis par la maison: "+rs.getString(5)+
-				"\n\tOptions proposées pour ce devis:\n\n"+
 				optionsStr+"\n\n";
 			j++;
 			
